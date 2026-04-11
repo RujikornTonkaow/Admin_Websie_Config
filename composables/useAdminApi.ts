@@ -10,6 +10,10 @@ import type {
   ContactMessage,
   UploadResponse,
   ReorderRequest,
+  AdminUser,
+  CreateUserRequest,
+  UpdateUserRequest,
+  UserRole,
 } from '~/types/admin'
 import {
   mockSiteSettings,
@@ -40,15 +44,23 @@ export const useAdminApi = () => {
         },
       })
 
+      if (!res) return undefined as T
+
       if (res.error) {
         throw new Error(res.error)
       }
 
       return res.data as T
     } catch (err: unknown) {
-      if (err instanceof Error && 'statusCode' in err && (err as { statusCode: number }).statusCode === 401) {
-        logout()
-        throw new Error('Session expired')
+      if (err instanceof Error && 'statusCode' in err) {
+        const status = (err as { statusCode: number }).statusCode
+        if (status === 401) {
+          logout()
+          throw new Error('Session expired')
+        }
+        if (status === 403) {
+          throw new Error('Insufficient permissions')
+        }
       }
       throw err
     }
@@ -70,9 +82,15 @@ export const useAdminApi = () => {
       if (res.error) throw new Error(res.error)
       return { data: res.data as T, meta: res.meta as Record<string, unknown> | undefined }
     } catch (err: unknown) {
-      if (err instanceof Error && 'statusCode' in err && (err as { statusCode: number }).statusCode === 401) {
-        logout()
-        throw new Error('Session expired')
+      if (err instanceof Error && 'statusCode' in err) {
+        const status = (err as { statusCode: number }).statusCode
+        if (status === 401) {
+          logout()
+          throw new Error('Session expired')
+        }
+        if (status === 403) {
+          throw new Error('Insufficient permissions')
+        }
       }
       throw err
     }
@@ -211,6 +229,33 @@ export const useAdminApi = () => {
     return `${apiBase}${path}`
   }
 
+  const users = {
+    list: (): Promise<AdminUser[]> =>
+      isMockMode.value
+        ? Promise.resolve([
+            { id: 'mock-admin', username: 'admin', role: 'admin' as UserRole, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+          ])
+        : apiFetch('/api/v1/admin/users'),
+    getById: (id: string): Promise<AdminUser> =>
+      isMockMode.value
+        ? Promise.resolve({ id, username: 'admin', role: 'admin' as UserRole, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        : apiFetch(`/api/v1/admin/users/${id}`),
+    create: (data: CreateUserRequest): Promise<AdminUser> =>
+      isMockMode.value
+        ? Promise.resolve({ id: `mock-${Date.now()}`, username: data.username, role: data.role, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        : apiFetch('/api/v1/admin/users', { method: 'POST', body: data }),
+    update: (id: string, data: UpdateUserRequest): Promise<AdminUser> =>
+      isMockMode.value
+        ? Promise.resolve({ id, username: data.username, role: data.role, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        : apiFetch(`/api/v1/admin/users/${id}`, { method: 'PUT', body: data }),
+    changePassword: (id: string, newPassword: string): Promise<void> =>
+      isMockMode.value
+        ? Promise.resolve()
+        : apiFetch(`/api/v1/admin/users/${id}/password`, { method: 'PUT', body: { new_password: newPassword } }),
+    delete: (id: string): Promise<void> =>
+      isMockMode.value ? Promise.resolve() : apiFetch(`/api/v1/admin/users/${id}`, { method: 'DELETE' }),
+  }
+
   return {
     siteSettings,
     hero,
@@ -220,6 +265,7 @@ export const useAdminApi = () => {
     experiences,
     socialLinks,
     contacts,
+    users,
     upload,
     getUploadUrl,
   }

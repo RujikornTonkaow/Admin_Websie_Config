@@ -4,7 +4,7 @@ const emit = defineEmits<{
 }>()
 
 const route = useRoute()
-const { isMockMode } = useAuth()
+const { isMockMode, userRole } = useAuth()
 
 const pageTitle = computed(() => {
   const titles: Record<string, string> = {
@@ -17,9 +17,12 @@ const pageTitle = computed(() => {
     '/experiences': 'Experience',
     '/social-links': 'Social Links',
     '/contacts': 'Messages',
+    '/users': 'User Management',
   }
   return titles[route.path] ?? 'Admin'
 })
+
+const isVisitorRole = computed(() => userRole.value === 'visitor')
 </script>
 
 <template>
@@ -35,6 +38,14 @@ const pageTitle = computed(() => {
     <h1 class="text-lg font-semibold text-slate-900">{{ pageTitle }}</h1>
 
     <div class="flex-1" />
+
+    <div
+      v-if="isVisitorRole && !isMockMode"
+      class="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-200"
+    >
+      <Icon name="mdi:eye-outline" class="h-3.5 w-3.5" />
+      Read-only mode
+    </div>
 
     <div
       v-if="isMockMode"

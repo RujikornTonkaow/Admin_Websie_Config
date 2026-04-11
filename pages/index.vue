@@ -2,6 +2,7 @@
 import type { SiteSettings, ContactMessage } from '~/types/admin'
 
 const api = useAdminApi()
+const { isEditor, userRole } = useAuth()
 
 const stats = ref<{ label: string; value: string; icon: string; color: string }[]>([])
 const recentMessages = ref<ContactMessage[]>([])
@@ -10,26 +11,38 @@ const loading = ref(true)
 const loadDashboard = async () => {
   loading.value = true
   try {
-    const [settings, skillsList, projectsList, experiencesList, contactsRes] = await Promise.all([
-      api.siteSettings.get(),
-      api.skills.list(),
-      api.projects.list(),
-      api.experiences.list(),
-      api.contacts.list(),
-    ])
+    if (isEditor.value) {
+      const [skillsList, projectsList, experiencesList, contactsRes] = await Promise.all([
+        api.skills.list(),
+        api.projects.list(),
+        api.experiences.list(),
+        api.contacts.list(),
+      ])
 
-    const unreadLabel = contactsRes.unreadCount > 0
-      ? `${contactsRes.items.length} (${contactsRes.unreadCount} new)`
-      : String(contactsRes.items.length)
+      const unreadLabel = contactsRes.unreadCount > 0
+        ? `${contactsRes.items.length} (${contactsRes.unreadCount} new)`
+        : String(contactsRes.items.length)
 
-    stats.value = [
-      { label: 'Skills', value: String(skillsList.length), icon: 'mdi:code-braces', color: 'bg-blue-100 text-blue-600' },
-      { label: 'Projects', value: String(projectsList.length), icon: 'mdi:folder-multiple', color: 'bg-emerald-100 text-emerald-600' },
-      { label: 'Experience', value: String(experiencesList.length), icon: 'mdi:briefcase', color: 'bg-amber-100 text-amber-600' },
-      { label: 'Messages', value: unreadLabel, icon: 'mdi:email', color: 'bg-purple-100 text-purple-600' },
-    ]
+      stats.value = [
+        { label: 'Skills', value: String(skillsList.length), icon: 'mdi:code-braces', color: 'bg-blue-100 text-blue-600' },
+        { label: 'Projects', value: String(projectsList.length), icon: 'mdi:folder-multiple', color: 'bg-emerald-100 text-emerald-600' },
+        { label: 'Experience', value: String(experiencesList.length), icon: 'mdi:briefcase', color: 'bg-amber-100 text-amber-600' },
+        { label: 'Messages', value: unreadLabel, icon: 'mdi:email', color: 'bg-purple-100 text-purple-600' },
+      ]
 
-    recentMessages.value = contactsRes.items.slice(0, 5)
+      recentMessages.value = contactsRes.items.slice(0, 5)
+    } else {
+      const contactsRes = await api.contacts.list()
+      const unreadLabel = contactsRes.unreadCount > 0
+        ? `${contactsRes.items.length} (${contactsRes.unreadCount} new)`
+        : String(contactsRes.items.length)
+
+      stats.value = [
+        { label: 'Messages', value: unreadLabel, icon: 'mdi:email', color: 'bg-purple-100 text-purple-600' },
+      ]
+
+      recentMessages.value = contactsRes.items.slice(0, 5)
+    }
   } catch {
     // Error handled by API composable
   } finally {
@@ -60,7 +73,7 @@ onMounted(loadDashboard)
       </div>
 
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div class="card">
+        <div v-if="isEditor" class="card">
           <div class="mb-4 flex items-center justify-between">
             <h2 class="text-base font-semibold text-slate-900">Quick Actions</h2>
           </div>

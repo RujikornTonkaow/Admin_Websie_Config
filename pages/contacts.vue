@@ -2,6 +2,7 @@
 import type { ContactMessage } from '~/types/admin'
 
 const api = useAdminApi()
+const { isEditor } = useAuth()
 
 const items = ref<ContactMessage[]>([])
 const unreadCount = ref(0)
@@ -131,6 +132,7 @@ onMounted(loadData)
               <p class="mt-1 text-sm font-medium text-slate-700 truncate">{{ msg.subject }}</p>
             </div>
             <button
+              v-if="isEditor"
               class="ml-2 shrink-0 rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-500"
               @click.stop="deleteTarget = msg"
             >

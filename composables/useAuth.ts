@@ -1,8 +1,24 @@
-import type { LoginRequest, LoginResponse, ApiEnvelope } from '~/types/admin'
+import type { LoginRequest, LoginResponse, ApiEnvelope, UserRole } from '~/types/admin'
 
 const TOKEN_KEY = 'admin_token'
 const MOCK_TOKEN = 'mock-demo-token'
 const MOCK_MODE_KEY = 'admin_mock_mode'
+const ROLE_LEVELS: Record<UserRole, number> = {
+  visitor: 1,
+  user_account: 2,
+  admin: 3,
+}
+
+const decodeTokenPayload = (jwt: string): Record<string, unknown> | null => {
+  try {
+    const parts = jwt.split('.')
+    if (parts.length !== 3) return null
+    const payload = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'))
+    return JSON.parse(payload)
+  } catch {
+    return null
+  }
+}
 
 export const useAuth = () => {
   const config = useRuntimeConfig()
@@ -21,7 +37,29 @@ export const useAuth = () => {
     return false
   })
 
+  const userRole = useState<UserRole>('user_role', () => {
+    if (import.meta.client && token.value && !isMockMode.value) {
+      const payload = decodeTokenPayload(token.value)
+      return (payload?.role as UserRole) ?? 'visitor'
+    }
+    return isMockMode.value ? 'admin' : 'visitor'
+  })
+
+  const currentUserId = useState<string>('current_user_id', () => {
+    if (import.meta.client && token.value && !isMockMode.value) {
+      const payload = decodeTokenPayload(token.value)
+      return (payload?.sub as string) ?? ''
+    }
+    return ''
+  })
+
   const isAuthenticated = computed(() => !!token.value)
+  const isAdmin = computed(() => userRole.value === 'admin')
+  const isEditor = computed(() => ROLE_LEVELS[userRole.value] >= ROLE_LEVELS.user_account)
+
+  const hasRole = (minRole: UserRole): boolean => {
+    return ROLE_LEVELS[userRole.value] >= ROLE_LEVELS[minRole]
+  }
 
   const login = async (credentials: LoginRequest): Promise<void> => {
     try {
@@ -41,6 +79,11 @@ export const useAuth = () => {
 
       token.value = jwt
       isMockMode.value = false
+
+      const payload = decodeTokenPayload(jwt)
+      userRole.value = (payload?.role as UserRole) ?? 'visitor'
+      currentUserId.value = (payload?.sub as string) ?? ''
+
       if (import.meta.client) {
         localStorage.setItem(TOKEN_KEY, jwt)
         localStorage.removeItem(MOCK_MODE_KEY)
@@ -59,6 +102,8 @@ export const useAuth = () => {
   const loginDemo = () => {
     token.value = MOCK_TOKEN
     isMockMode.value = true
+    userRole.value = 'admin'
+    currentUserId.value = 'mock-user-id'
     if (import.meta.client) {
       localStorage.setItem(TOKEN_KEY, MOCK_TOKEN)
       localStorage.setItem(MOCK_MODE_KEY, 'true')
@@ -68,6 +113,8 @@ export const useAuth = () => {
   const logout = () => {
     token.value = null
     isMockMode.value = false
+    userRole.value = 'visitor'
+    currentUserId.value = ''
     if (import.meta.client) {
       localStorage.removeItem(TOKEN_KEY)
       localStorage.removeItem(MOCK_MODE_KEY)
@@ -84,6 +131,11 @@ export const useAuth = () => {
     token,
     isAuthenticated,
     isMockMode,
+    userRole,
+    currentUserId,
+    isAdmin,
+    isEditor,
+    hasRole,
     login,
     loginDemo,
     logout,

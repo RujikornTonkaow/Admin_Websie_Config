@@ -11,14 +11,18 @@ const emit = defineEmits<{
 
 const newTag = ref('')
 
-const addTag = () => {
-  const tag = newTag.value.trim()
-  if (!tag) return
-  if (props.modelValue.includes(tag)) {
+const addTags = (raw: string) => {
+  const tags = raw
+    .split(/[,\n]+/)
+    .map(t => t.trim())
+    .filter(t => t.length > 0 && !props.modelValue.includes(t))
+
+  if (tags.length === 0) {
     newTag.value = ''
     return
   }
-  emit('update:modelValue', [...props.modelValue, tag])
+
+  emit('update:modelValue', [...props.modelValue, ...tags])
   newTag.value = ''
 }
 
@@ -29,9 +33,15 @@ const removeTag = (index: number) => {
 }
 
 const handleKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Enter') {
+  if (e.key === 'Enter' || e.key === ',') {
     e.preventDefault()
-    addTag()
+    addTags(newTag.value)
+  }
+}
+
+const handleBlur = () => {
+  if (newTag.value.trim()) {
+    addTags(newTag.value)
   }
 }
 </script>
@@ -59,10 +69,12 @@ const handleKeydown = (e: KeyboardEvent) => {
       <input
         v-model="newTag"
         type="text"
-        :placeholder="placeholder ?? 'Type and press Enter'"
+        :placeholder="placeholder ?? 'Type and press Enter or comma'"
         class="min-w-[120px] flex-1 border-0 bg-transparent px-1 py-1 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
         @keydown="handleKeydown"
+        @blur="handleBlur"
       />
     </div>
+    <p class="mt-1 text-xs text-slate-400">Press Enter or comma to add. Click outside to confirm.</p>
   </div>
 </template>

@@ -98,6 +98,31 @@ export interface ContactMessage {
   created_at: string
 }
 
+export type UserRole = 'admin' | 'user_account' | 'visitor'
+
+export interface AdminUser {
+  id: string
+  username: string
+  role: UserRole
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateUserRequest {
+  username: string
+  password: string
+  role: UserRole
+}
+
+export interface UpdateUserRequest {
+  username: string
+  role: UserRole
+}
+
+export interface ChangePasswordRequest {
+  new_password: string
+}
+
 export interface LoginRequest {
   username: string
   password: string
@@ -105,6 +130,17 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   token: string
+  user: {
+    id: string
+    username: string
+    role: UserRole
+  }
+}
+
+export interface LoginUser {
+  id: string
+  username: string
+  role: UserRole
 }
 
 export interface UploadResponse {
@@ -125,4 +161,5 @@ export interface SidebarLink {
   label: string
   to: string
   icon: string
+  minRole?: UserRole
 }
