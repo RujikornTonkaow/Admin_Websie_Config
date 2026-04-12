@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Experience } from '~/types/admin'
 
+const { t } = useI18n()
 const api = useAdminApi()
 
 const items = ref<Experience[]>([])
@@ -28,7 +29,7 @@ const loadData = async () => {
   try {
     items.value = await api.experiences.list()
   } catch {
-    toast.value = { message: 'Failed to load experiences', type: 'error' }
+    toast.value = { message: t('experiences.saveError'), type: 'error' }
   } finally {
     loading.value = false
   }
@@ -70,7 +71,7 @@ const removeHighlight = (index: number) => {
 
 const handleSave = async () => {
   if (!form.role.trim() || !form.company.trim() || !form.period.trim()) {
-    toast.value = { message: 'Role, company, and period are required', type: 'error' }
+    toast.value = { message: t('experiences.roleCompanyPeriodRequired'), type: 'error' }
     return
   }
 
@@ -83,15 +84,15 @@ const handleSave = async () => {
 
     if (editingId.value) {
       await api.experiences.update(editingId.value, payload)
-      toast.value = { message: 'Experience updated', type: 'success' }
+      toast.value = { message: t('experiences.updateSuccess'), type: 'success' }
     } else {
       await api.experiences.create(payload)
-      toast.value = { message: 'Experience created', type: 'success' }
+      toast.value = { message: t('experiences.createSuccess'), type: 'success' }
     }
     resetForm()
     await loadData()
   } catch {
-    toast.value = { message: 'Failed to save experience', type: 'error' }
+    toast.value = { message: t('experiences.saveError'), type: 'error' }
   } finally {
     saving.value = false
   }
@@ -102,11 +103,11 @@ const handleDelete = async () => {
   deleting.value = true
   try {
     await api.experiences.delete(deleteTarget.value.id)
-    toast.value = { message: 'Experience deleted', type: 'success' }
+    toast.value = { message: t('experiences.deleteSuccess'), type: 'success' }
     deleteTarget.value = null
     await loadData()
   } catch {
-    toast.value = { message: 'Failed to delete experience', type: 'error' }
+    toast.value = { message: t('experiences.deleteError'), type: 'error' }
   } finally {
     deleting.value = false
   }
@@ -120,7 +121,7 @@ const moveUp = async (index: number) => {
     await api.experiences.reorder(ids)
     await loadData()
   } catch {
-    toast.value = { message: 'Failed to reorder', type: 'error' }
+    toast.value = { message: t('experiences.reorderError'), type: 'error' }
   }
 }
 
@@ -132,7 +133,7 @@ const moveDown = async (index: number) => {
     await api.experiences.reorder(ids)
     await loadData()
   } catch {
-    toast.value = { message: 'Failed to reorder', type: 'error' }
+    toast.value = { message: t('experiences.reorderError'), type: 'error' }
   }
 }
 
@@ -145,60 +146,65 @@ onMounted(loadData)
 
     <ConfirmDialog
       :open="!!deleteTarget"
-      title="Delete Experience"
-      :message="`Are you sure you want to delete '${deleteTarget?.role} at ${deleteTarget?.company}'?`"
+      :title="$t('experiences.deleteTitle')"
+      :message="$t('experiences.deleteMessage', { role: deleteTarget?.role, company: deleteTarget?.company })"
       :loading="deleting"
       @confirm="handleDelete"
       @cancel="deleteTarget = null"
     />
 
     <div class="flex items-center justify-between">
-      <p class="text-sm text-slate-500">{{ items.length }} experience(s)</p>
+      <p class="text-sm text-slate-500">{{ $t('experiences.count', { count: items.length }) }}</p>
       <button class="btn-primary" @click="openCreate">
-        <Icon name="mdi:plus" class="h-4 w-4" /> Add Experience
+        <Icon name="mdi:plus" class="h-4 w-4" /> {{ $t('experiences.addExperience') }}
       </button>
     </div>
 
     <div v-if="showForm" class="card space-y-4">
       <h3 class="text-base font-semibold text-slate-900">
-        {{ editingId ? 'Edit Experience' : 'New Experience' }}
+        {{ editingId ? $t('experiences.editExperience') : $t('experiences.newExperience') }}
       </h3>
 
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label class="form-label">Role / Position</label>
-          <input v-model="form.role" type="text" class="form-input" placeholder="Senior Full-Stack Developer" />
+          <label class="form-label">{{ $t('experiences.role') }}</label>
+          <input v-model="form.role" type="text" class="form-input" :placeholder="$t('experiences.rolePlaceholder')" />
+          <p class="mt-1 text-xs text-slate-500">{{ $t('experiences.roleHelp') }}</p>
         </div>
         <div>
-          <label class="form-label">Company</label>
-          <input v-model="form.company" type="text" class="form-input" placeholder="Company Name" />
+          <label class="form-label">{{ $t('experiences.company') }}</label>
+          <input v-model="form.company" type="text" class="form-input" :placeholder="$t('experiences.companyPlaceholder')" />
+          <p class="mt-1 text-xs text-slate-500">{{ $t('experiences.companyHelp') }}</p>
         </div>
       </div>
 
       <div>
-        <label class="form-label">Period</label>
-        <input v-model="form.period" type="text" class="form-input" placeholder="2024 - Present" />
+        <label class="form-label">{{ $t('experiences.period') }}</label>
+        <input v-model="form.period" type="text" class="form-input" :placeholder="$t('experiences.periodPlaceholder')" />
+        <p class="mt-1 text-xs text-slate-500">{{ $t('experiences.periodHelp') }}</p>
       </div>
 
       <div>
-        <label class="form-label">Description</label>
-        <textarea v-model="form.description" class="form-textarea" rows="2" placeholder="Brief description of your role" />
+        <label class="form-label">{{ $t('experiences.description') }}</label>
+        <textarea v-model="form.description" class="form-textarea" rows="2" :placeholder="$t('experiences.descriptionPlaceholder')" />
+        <p class="mt-1 text-xs text-slate-500">{{ $t('experiences.descriptionHelp') }}</p>
       </div>
 
       <div>
         <div class="mb-2 flex items-center justify-between">
-          <label class="form-label mb-0">Highlights</label>
+          <label class="form-label mb-0">{{ $t('experiences.highlights') }}</label>
           <button type="button" class="text-sm font-medium text-indigo-600 hover:text-indigo-700" @click="addHighlight">
-            + Add Highlight
+            {{ $t('experiences.addHighlight') }}
           </button>
         </div>
+        <p class="mb-2 text-xs text-slate-500">{{ $t('experiences.highlightsHelp') }}</p>
         <div class="space-y-2">
           <div v-for="(_, index) in form.highlights" :key="index" class="flex gap-2">
             <input
               v-model="form.highlights[index]"
               type="text"
               class="form-input flex-1"
-              :placeholder="`Achievement ${index + 1}`"
+              :placeholder="$t('experiences.highlightPlaceholder')"
             />
             <button
               v-if="form.highlights.length > 1"
@@ -213,10 +219,10 @@ onMounted(loadData)
       </div>
 
       <div class="flex justify-end gap-3">
-        <button type="button" class="btn-secondary" @click="resetForm">Cancel</button>
+        <button type="button" class="btn-secondary" @click="resetForm">{{ $t('common.cancel') }}</button>
         <button type="button" class="btn-primary" :disabled="saving" @click="handleSave">
           <Icon v-if="saving" name="mdi:loading" class="h-4 w-4 animate-spin" />
-          {{ editingId ? 'Update' : 'Create' }}
+          {{ editingId ? $t('common.update') : $t('common.create') }}
         </button>
       </div>
     </div>
@@ -227,7 +233,7 @@ onMounted(loadData)
 
     <div v-else-if="items.length === 0" class="card py-12 text-center">
       <Icon name="mdi:briefcase" class="mx-auto mb-3 h-12 w-12 text-slate-300" />
-      <p class="text-sm text-slate-500">No experience added yet</p>
+      <p class="text-sm text-slate-500">{{ $t('experiences.noExperience') }}</p>
     </div>
 
     <div v-else class="space-y-3">
@@ -268,7 +274,7 @@ onMounted(loadData)
               &bull; {{ h }}
             </li>
             <li v-if="item.highlights.length > 3" class="text-xs text-slate-400">
-              +{{ item.highlights.length - 3 }} more
+              {{ $t('common.more', { count: item.highlights.length - 3 }) }}
             </li>
           </ul>
         </div>

@@ -9,6 +9,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
+const { t } = useI18n()
 const { upload, getUploadUrl } = useAdminApi()
 
 const uploading = ref(false)
@@ -26,13 +27,13 @@ const handleFileChange = async (event: Event) => {
 
   const maxSize = 10 * 1024 * 1024
   if (file.size > maxSize) {
-    errorMsg.value = 'File size must be less than 10MB'
+    errorMsg.value = t('formImageUpload.fileSizeError')
     return
   }
 
   const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
   if (!allowed.includes(file.type)) {
-    errorMsg.value = 'Only JPG, PNG, GIF, WebP, and SVG files are allowed'
+    errorMsg.value = t('formImageUpload.fileTypeError')
     return
   }
 
@@ -43,7 +44,7 @@ const handleFileChange = async (event: Event) => {
     const result = await upload(file)
     emit('update:modelValue', result.url)
   } catch (err: unknown) {
-    errorMsg.value = err instanceof Error ? err.message : 'Upload failed'
+    errorMsg.value = err instanceof Error ? err.message : t('formImageUpload.uploadError')
   } finally {
     uploading.value = false
     input.value = ''
@@ -76,7 +77,7 @@ const handleFileChange = async (event: Event) => {
           :class="{ 'opacity-50 cursor-not-allowed': uploading }"
         >
           <Icon v-if="uploading" name="mdi:loading" class="h-4 w-4 animate-spin" />
-          <span>{{ uploading ? 'Uploading...' : 'Choose File' }}</span>
+          <span>{{ uploading ? $t('formImageUpload.uploading') : $t('formImageUpload.chooseFile') }}</span>
           <input
             type="file"
             accept="image/*"

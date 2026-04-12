@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Hero } from '~/types/admin'
 
+const { t } = useI18n()
 const api = useAdminApi()
 
 const form = reactive<Partial<Hero>>({
@@ -31,7 +32,7 @@ const loadData = async () => {
       cta_secondary_link: data.cta_secondary_link,
     })
   } catch {
-    toast.value = { message: 'Failed to load hero data', type: 'error' }
+    toast.value = { message: t('hero.loadError'), type: 'error' }
   } finally {
     loading.value = false
   }
@@ -41,9 +42,9 @@ const handleSave = async () => {
   saving.value = true
   try {
     await api.hero.update(form)
-    toast.value = { message: 'Hero section saved successfully', type: 'success' }
+    toast.value = { message: t('hero.saveSuccess'), type: 'success' }
   } catch {
-    toast.value = { message: 'Failed to save hero section', type: 'error' }
+    toast.value = { message: t('hero.saveError'), type: 'error' }
   } finally {
     saving.value = false
   }
@@ -62,48 +63,55 @@ onMounted(loadData)
 
     <form v-else class="card space-y-6" @submit.prevent="handleSave">
       <div>
-        <label for="greeting" class="form-label">Greeting Text</label>
-        <input id="greeting" v-model="form.greeting" type="text" class="form-input" placeholder="Hello, I'm" />
+        <label for="greeting" class="form-label">{{ $t('hero.greeting') }}</label>
+        <input id="greeting" v-model="form.greeting" type="text" class="form-input" :placeholder="$t('hero.greetingPlaceholder')" />
+        <p class="mt-1 text-xs text-slate-500">{{ $t('hero.greetingHelp') }}</p>
       </div>
 
       <div>
-        <label for="full_name" class="form-label">Full Name</label>
-        <input id="full_name" v-model="form.full_name" type="text" class="form-input" placeholder="John Doe" />
+        <label for="full_name" class="form-label">{{ $t('hero.fullName') }}</label>
+        <input id="full_name" v-model="form.full_name" type="text" class="form-input" :placeholder="$t('hero.fullNamePlaceholder')" />
+        <p class="mt-1 text-xs text-slate-500">{{ $t('hero.fullNameHelp') }}</p>
       </div>
 
       <div>
-        <label for="subtitle" class="form-label">Subtitle / Tagline</label>
-        <textarea id="subtitle" v-model="form.subtitle" class="form-textarea" rows="3" placeholder="Full-Stack Developer crafting performant..." />
+        <label for="subtitle" class="form-label">{{ $t('hero.subtitle') }}</label>
+        <textarea id="subtitle" v-model="form.subtitle" class="form-textarea" rows="3" :placeholder="$t('hero.subtitlePlaceholder')" />
+        <p class="mt-1 text-xs text-slate-500">{{ $t('hero.subtitleHelp') }}</p>
       </div>
 
       <fieldset class="space-y-4 rounded-lg border border-slate-200 p-4">
-        <legend class="px-2 text-sm font-medium text-slate-700">Primary CTA Button</legend>
+        <legend class="px-2 text-sm font-medium text-slate-700">{{ $t('hero.ctaPrimary') }}</legend>
         <div>
-          <label for="cta_primary_text" class="form-label">Button Text</label>
-          <input id="cta_primary_text" v-model="form.cta_primary_text" type="text" class="form-input" placeholder="View My Work" />
+          <label for="cta_primary_text" class="form-label">{{ $t('hero.buttonText') }}</label>
+          <input id="cta_primary_text" v-model="form.cta_primary_text" type="text" class="form-input" :placeholder="$t('hero.buttonTextPrimaryPlaceholder')" />
+          <p class="mt-1 text-xs text-slate-500">{{ $t('hero.buttonTextHelp') }}</p>
         </div>
         <div>
-          <label for="cta_primary_link" class="form-label">Button Link</label>
-          <input id="cta_primary_link" v-model="form.cta_primary_link" type="text" class="form-input" placeholder="#projects" />
+          <label for="cta_primary_link" class="form-label">{{ $t('hero.buttonLink') }}</label>
+          <input id="cta_primary_link" v-model="form.cta_primary_link" type="text" class="form-input" :placeholder="$t('hero.buttonLinkPrimaryPlaceholder')" />
+          <p class="mt-1 text-xs text-slate-500">{{ $t('hero.buttonLinkHelp') }}</p>
         </div>
       </fieldset>
 
       <fieldset class="space-y-4 rounded-lg border border-slate-200 p-4">
-        <legend class="px-2 text-sm font-medium text-slate-700">Secondary CTA Button</legend>
+        <legend class="px-2 text-sm font-medium text-slate-700">{{ $t('hero.ctaSecondary') }}</legend>
         <div>
-          <label for="cta_secondary_text" class="form-label">Button Text</label>
-          <input id="cta_secondary_text" v-model="form.cta_secondary_text" type="text" class="form-input" placeholder="Get in Touch" />
+          <label for="cta_secondary_text" class="form-label">{{ $t('hero.buttonText') }}</label>
+          <input id="cta_secondary_text" v-model="form.cta_secondary_text" type="text" class="form-input" :placeholder="$t('hero.buttonTextSecondaryPlaceholder')" />
+          <p class="mt-1 text-xs text-slate-500">{{ $t('hero.buttonTextHelp') }}</p>
         </div>
         <div>
-          <label for="cta_secondary_link" class="form-label">Button Link</label>
-          <input id="cta_secondary_link" v-model="form.cta_secondary_link" type="text" class="form-input" placeholder="#contact" />
+          <label for="cta_secondary_link" class="form-label">{{ $t('hero.buttonLink') }}</label>
+          <input id="cta_secondary_link" v-model="form.cta_secondary_link" type="text" class="form-input" :placeholder="$t('hero.buttonLinkSecondaryPlaceholder')" />
+          <p class="mt-1 text-xs text-slate-500">{{ $t('hero.buttonLinkHelp') }}</p>
         </div>
       </fieldset>
 
       <div class="flex justify-end border-t border-slate-200 pt-4">
         <button type="submit" class="btn-primary" :disabled="saving">
           <Icon v-if="saving" name="mdi:loading" class="h-4 w-4 animate-spin" />
-          {{ saving ? 'Saving...' : 'Save Changes' }}
+          {{ saving ? $t('common.saving') : $t('common.save') }}
         </button>
       </div>
     </form>

@@ -37,11 +37,11 @@ const emit = defineEmits<{
 
           <div class="mt-6 flex justify-end gap-3">
             <button class="btn-secondary" :disabled="loading" @click="emit('cancel')">
-              Cancel
+              {{ $t('common.cancel') }}
             </button>
             <button class="btn-danger" :disabled="loading" @click="emit('confirm')">
               <Icon v-if="loading" name="mdi:loading" class="h-4 w-4 animate-spin" />
-              {{ confirmText ?? 'Delete' }}
+              {{ confirmText ?? $t('common.delete') }}
             </button>
           </div>
         </div>

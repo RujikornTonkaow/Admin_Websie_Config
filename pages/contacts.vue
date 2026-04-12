@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ContactMessage } from '~/types/admin'
 
+const { t, locale } = useI18n()
 const api = useAdminApi()
 const { isEditor } = useAuth()
 
@@ -20,7 +21,7 @@ const loadData = async () => {
     items.value = res.items
     unreadCount.value = res.unreadCount
   } catch {
-    toast.value = { message: 'Failed to load messages', type: 'error' }
+    toast.value = { message: t('contacts.loadError'), type: 'error' }
   } finally {
     loading.value = false
   }
@@ -36,7 +37,7 @@ const openMessage = async (msg: ContactMessage) => {
       items.value[idx] = { ...items.value[idx], is_read: true }
     }
   } catch {
-    toast.value = { message: 'Failed to load message', type: 'error' }
+    toast.value = { message: t('contacts.loadMessageError'), type: 'error' }
   }
 }
 
@@ -45,14 +46,14 @@ const handleDelete = async () => {
   deleting.value = true
   try {
     await api.contacts.delete(deleteTarget.value.id)
-    toast.value = { message: 'Message deleted', type: 'success' }
+    toast.value = { message: t('contacts.deleteSuccess'), type: 'success' }
     if (selectedMessage.value?.id === deleteTarget.value.id) {
       selectedMessage.value = null
     }
     deleteTarget.value = null
     await loadData()
   } catch {
-    toast.value = { message: 'Failed to delete message', type: 'error' }
+    toast.value = { message: t('contacts.deleteError'), type: 'error' }
   } finally {
     deleting.value = false
   }
@@ -60,7 +61,8 @@ const handleDelete = async () => {
 
 const formatDate = (dateStr: string): string => {
   const date = new Date(dateStr)
-  return date.toLocaleDateString('en-US', {
+  const dateLocale = locale.value === 'th' ? 'th-TH' : 'en-US'
+  return date.toLocaleDateString(dateLocale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -78,8 +80,8 @@ onMounted(loadData)
 
     <ConfirmDialog
       :open="!!deleteTarget"
-      title="Delete Message"
-      :message="`Are you sure you want to delete message from '${deleteTarget?.name}'?`"
+      :title="$t('contacts.deleteTitle')"
+      :message="$t('contacts.deleteMessage', { name: deleteTarget?.name })"
       :loading="deleting"
       @confirm="handleDelete"
       @cancel="deleteTarget = null"
@@ -87,12 +89,12 @@ onMounted(loadData)
 
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <p class="text-sm text-slate-500">{{ items.length }} message(s)</p>
+        <p class="text-sm text-slate-500">{{ $t('contacts.count', { count: items.length }) }}</p>
         <span
           v-if="unreadCount > 0"
           class="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700"
         >
-          {{ unreadCount }} unread
+          {{ $t('contacts.unread', { count: unreadCount }) }}
         </span>
       </div>
     </div>
@@ -103,7 +105,7 @@ onMounted(loadData)
 
     <div v-else-if="items.length === 0" class="card py-12 text-center">
       <Icon name="mdi:email-outline" class="mx-auto mb-3 h-12 w-12 text-slate-300" />
-      <p class="text-sm text-slate-500">No messages yet</p>
+      <p class="text-sm text-slate-500">{{ $t('contacts.noMessages') }}</p>
     </div>
 
     <div v-else class="grid grid-cols-1 gap-6 lg:grid-cols-5">
@@ -169,7 +171,7 @@ onMounted(loadData)
 
         <div v-else class="card flex flex-col items-center justify-center py-16 text-center">
           <Icon name="mdi:email-open-outline" class="mb-3 h-12 w-12 text-slate-300" />
-          <p class="text-sm text-slate-500">Select a message to read</p>
+          <p class="text-sm text-slate-500">{{ $t('contacts.selectMessage') }}</p>
         </div>
       </div>
     </div>

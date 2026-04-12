@@ -9,6 +9,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: string[]]
 }>()
 
+const { t } = useI18n()
 const newTag = ref('')
 
 const addTags = (raw: string) => {
@@ -69,12 +70,12 @@ const handleBlur = () => {
       <input
         v-model="newTag"
         type="text"
-        :placeholder="placeholder ?? 'Type and press Enter or comma'"
+        :placeholder="placeholder ?? t('formTagInput.hint')"
         class="min-w-[120px] flex-1 border-0 bg-transparent px-1 py-1 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
         @keydown="handleKeydown"
         @blur="handleBlur"
       />
     </div>
-    <p class="mt-1 text-xs text-slate-400">Press Enter or comma to add. Click outside to confirm.</p>
+    <p class="mt-1 text-xs text-slate-400">{{ $t('formTagInput.hint') }}</p>
   </div>
 </template>

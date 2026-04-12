@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { SocialLink } from '~/types/admin'
 
+const { t } = useI18n()
 const api = useAdminApi()
 
 const items = ref<SocialLink[]>([])
@@ -26,7 +27,7 @@ const loadData = async () => {
   try {
     items.value = await api.socialLinks.list()
   } catch {
-    toast.value = { message: 'Failed to load social links', type: 'error' }
+    toast.value = { message: t('socialLinks.saveError'), type: 'error' }
   } finally {
     loading.value = false
   }
@@ -57,7 +58,7 @@ const openEdit = (item: SocialLink) => {
 
 const handleSave = async () => {
   if (!form.name.trim() || !form.url.trim() || !form.icon.trim()) {
-    toast.value = { message: 'All fields are required', type: 'error' }
+    toast.value = { message: t('socialLinks.allFieldsRequired'), type: 'error' }
     return
   }
 
@@ -65,15 +66,15 @@ const handleSave = async () => {
   try {
     if (editingId.value) {
       await api.socialLinks.update(editingId.value, form)
-      toast.value = { message: 'Social link updated', type: 'success' }
+      toast.value = { message: t('socialLinks.updateSuccess'), type: 'success' }
     } else {
       await api.socialLinks.create(form)
-      toast.value = { message: 'Social link created', type: 'success' }
+      toast.value = { message: t('socialLinks.createSuccess'), type: 'success' }
     }
     resetForm()
     await loadData()
   } catch {
-    toast.value = { message: 'Failed to save social link', type: 'error' }
+    toast.value = { message: t('socialLinks.saveError'), type: 'error' }
   } finally {
     saving.value = false
   }
@@ -84,11 +85,11 @@ const handleDelete = async () => {
   deleting.value = true
   try {
     await api.socialLinks.delete(deleteTarget.value.id)
-    toast.value = { message: 'Social link deleted', type: 'success' }
+    toast.value = { message: t('socialLinks.deleteSuccess'), type: 'success' }
     deleteTarget.value = null
     await loadData()
   } catch {
-    toast.value = { message: 'Failed to delete social link', type: 'error' }
+    toast.value = { message: t('socialLinks.deleteError'), type: 'error' }
   } finally {
     deleting.value = false
   }
@@ -103,52 +104,54 @@ onMounted(loadData)
 
     <ConfirmDialog
       :open="!!deleteTarget"
-      title="Delete Social Link"
-      :message="`Are you sure you want to delete '${deleteTarget?.name}'?`"
+      :title="$t('socialLinks.deleteTitle')"
+      :message="$t('socialLinks.deleteMessage', { name: deleteTarget?.name })"
       :loading="deleting"
       @confirm="handleDelete"
       @cancel="deleteTarget = null"
     />
 
     <div class="flex items-center justify-between">
-      <p class="text-sm text-slate-500">{{ items.length }} link(s)</p>
+      <p class="text-sm text-slate-500">{{ $t('socialLinks.count', { count: items.length }) }}</p>
       <button class="btn-primary" @click="openCreate">
-        <Icon name="mdi:plus" class="h-4 w-4" /> Add Link
+        <Icon name="mdi:plus" class="h-4 w-4" /> {{ $t('socialLinks.addLink') }}
       </button>
     </div>
 
     <div v-if="showForm" class="card space-y-4">
       <h3 class="text-base font-semibold text-slate-900">
-        {{ editingId ? 'Edit Social Link' : 'New Social Link' }}
+        {{ editingId ? $t('socialLinks.editLink') : $t('socialLinks.newLink') }}
       </h3>
 
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label class="form-label">Platform Name</label>
-          <input v-model="form.name" type="text" class="form-input" placeholder="e.g. GitHub" />
+          <label class="form-label">{{ $t('socialLinks.platformName') }}</label>
+          <input v-model="form.name" type="text" class="form-input" :placeholder="$t('socialLinks.platformNamePlaceholder')" />
+          <p class="mt-1 text-xs text-slate-500">{{ $t('socialLinks.platformNameHelp') }}</p>
         </div>
         <div>
-          <label class="form-label">Iconify Icon Name</label>
+          <label class="form-label">{{ $t('socialLinks.iconName') }}</label>
           <div class="flex items-center gap-3">
-            <input v-model="form.icon" type="text" class="form-input flex-1" placeholder="e.g. mdi:github" />
+            <input v-model="form.icon" type="text" class="form-input flex-1" :placeholder="$t('socialLinks.iconPlaceholder')" />
             <div v-if="form.icon" class="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-slate-50">
               <Icon :name="form.icon" class="h-6 w-6" />
             </div>
           </div>
+          <p class="mt-1 text-xs text-slate-500">{{ $t('socialLinks.iconHelp') }}</p>
         </div>
       </div>
 
       <div>
-        <label class="form-label">URL</label>
-        <input v-model="form.url" type="text" class="form-input" placeholder="https://github.com/username" />
-        <p class="mt-1 text-xs text-slate-500">For email, use mailto:email@example.com</p>
+        <label class="form-label">{{ $t('socialLinks.url') }}</label>
+        <input v-model="form.url" type="text" class="form-input" :placeholder="$t('socialLinks.urlPlaceholder')" />
+        <p class="mt-1 text-xs text-slate-500">{{ $t('socialLinks.urlHelp') }}</p>
       </div>
 
       <div class="flex justify-end gap-3">
-        <button type="button" class="btn-secondary" @click="resetForm">Cancel</button>
+        <button type="button" class="btn-secondary" @click="resetForm">{{ $t('common.cancel') }}</button>
         <button type="button" class="btn-primary" :disabled="saving" @click="handleSave">
           <Icon v-if="saving" name="mdi:loading" class="h-4 w-4 animate-spin" />
-          {{ editingId ? 'Update' : 'Create' }}
+          {{ editingId ? $t('common.update') : $t('common.create') }}
         </button>
       </div>
     </div>
@@ -159,7 +162,7 @@ onMounted(loadData)
 
     <div v-else-if="items.length === 0" class="card py-12 text-center">
       <Icon name="mdi:link-variant" class="mx-auto mb-3 h-12 w-12 text-slate-300" />
-      <p class="text-sm text-slate-500">No social links added yet</p>
+      <p class="text-sm text-slate-500">{{ $t('socialLinks.noLinks') }}</p>
     </div>
 
     <div v-else class="space-y-3">

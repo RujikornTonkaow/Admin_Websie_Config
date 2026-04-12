@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Project } from '~/types/admin'
 
+const { t } = useI18n()
 const api = useAdminApi()
 
 const items = ref<Project[]>([])
@@ -29,7 +30,7 @@ const loadData = async () => {
   try {
     items.value = await api.projects.list()
   } catch {
-    toast.value = { message: 'Failed to load projects', type: 'error' }
+    toast.value = { message: t('projects.saveError'), type: 'error' }
   } finally {
     loading.value = false
   }
@@ -63,7 +64,7 @@ const openEdit = (item: Project) => {
 
 const handleSave = async () => {
   if (!form.title.trim() || !form.description.trim()) {
-    toast.value = { message: 'Title and description are required', type: 'error' }
+    toast.value = { message: t('projects.titleDescRequired'), type: 'error' }
     return
   }
 
@@ -71,15 +72,15 @@ const handleSave = async () => {
   try {
     if (editingId.value) {
       await api.projects.update(editingId.value, form)
-      toast.value = { message: 'Project updated', type: 'success' }
+      toast.value = { message: t('projects.updateSuccess'), type: 'success' }
     } else {
       await api.projects.create(form)
-      toast.value = { message: 'Project created', type: 'success' }
+      toast.value = { message: t('projects.createSuccess'), type: 'success' }
     }
     resetForm()
     await loadData()
   } catch {
-    toast.value = { message: 'Failed to save project', type: 'error' }
+    toast.value = { message: t('projects.saveError'), type: 'error' }
   } finally {
     saving.value = false
   }
@@ -90,11 +91,11 @@ const handleDelete = async () => {
   deleting.value = true
   try {
     await api.projects.delete(deleteTarget.value.id)
-    toast.value = { message: 'Project deleted', type: 'success' }
+    toast.value = { message: t('projects.deleteSuccess'), type: 'success' }
     deleteTarget.value = null
     await loadData()
   } catch {
-    toast.value = { message: 'Failed to delete project', type: 'error' }
+    toast.value = { message: t('projects.deleteError'), type: 'error' }
   } finally {
     deleting.value = false
   }
@@ -108,7 +109,7 @@ const moveUp = async (index: number) => {
     await api.projects.reorder(ids)
     await loadData()
   } catch {
-    toast.value = { message: 'Failed to reorder', type: 'error' }
+    toast.value = { message: t('projects.reorderError'), type: 'error' }
   }
 }
 
@@ -120,7 +121,7 @@ const moveDown = async (index: number) => {
     await api.projects.reorder(ids)
     await loadData()
   } catch {
-    toast.value = { message: 'Failed to reorder', type: 'error' }
+    toast.value = { message: t('projects.reorderError'), type: 'error' }
   }
 }
 
@@ -133,55 +134,62 @@ onMounted(loadData)
 
     <ConfirmDialog
       :open="!!deleteTarget"
-      title="Delete Project"
-      :message="`Are you sure you want to delete '${deleteTarget?.title}'?`"
+      :title="$t('projects.deleteTitle')"
+      :message="$t('projects.deleteMessage', { title: deleteTarget?.title })"
       :loading="deleting"
       @confirm="handleDelete"
       @cancel="deleteTarget = null"
     />
 
     <div class="flex items-center justify-between">
-      <p class="text-sm text-slate-500">{{ items.length }} project(s)</p>
+      <p class="text-sm text-slate-500">{{ $t('projects.count', { count: items.length }) }}</p>
       <button class="btn-primary" @click="openCreate">
-        <Icon name="mdi:plus" class="h-4 w-4" /> Add Project
+        <Icon name="mdi:plus" class="h-4 w-4" /> {{ $t('projects.addProject') }}
       </button>
     </div>
 
     <div v-if="showForm" class="card space-y-4">
       <h3 class="text-base font-semibold text-slate-900">
-        {{ editingId ? 'Edit Project' : 'New Project' }}
+        {{ editingId ? $t('projects.editProject') : $t('projects.newProject') }}
       </h3>
 
       <div>
-        <label class="form-label">Title</label>
-        <input v-model="form.title" type="text" class="form-input" placeholder="Project title" />
+        <label class="form-label">{{ $t('projects.title') }}</label>
+        <input v-model="form.title" type="text" class="form-input" :placeholder="$t('projects.titlePlaceholder')" />
+        <p class="mt-1 text-xs text-slate-500">{{ $t('projects.titleHelp') }}</p>
       </div>
 
       <div>
-        <label class="form-label">Description</label>
-        <textarea v-model="form.description" class="form-textarea" rows="3" placeholder="Brief project description" />
+        <label class="form-label">{{ $t('projects.description') }}</label>
+        <textarea v-model="form.description" class="form-textarea" rows="3" :placeholder="$t('projects.descriptionPlaceholder')" />
+        <p class="mt-1 text-xs text-slate-500">{{ $t('projects.descriptionHelp') }}</p>
       </div>
 
-      <FormTagInput v-model="form.tags" label="Technologies" placeholder="e.g. Vue.js, Go, MongoDB" />
+      <div>
+        <FormTagInput v-model="form.tags" :label="$t('projects.technologies')" :placeholder="$t('projects.technologiesPlaceholder')" />
+        <p class="mt-1 text-xs text-slate-500">{{ $t('projects.technologiesHelp') }}</p>
+      </div>
 
-      <FormImageUpload v-model="form.image" label="Project Image" help-text="Recommended: 800×400px" />
+      <FormImageUpload v-model="form.image" :label="$t('projects.projectImage')" :help-text="$t('projects.projectImageHelp')" />
 
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label class="form-label">Live Demo URL</label>
-          <input v-model="form.live_url" type="url" class="form-input" placeholder="https://..." />
+          <label class="form-label">{{ $t('projects.liveUrl') }}</label>
+          <input v-model="form.live_url" type="url" class="form-input" :placeholder="$t('projects.liveUrlPlaceholder')" />
+          <p class="mt-1 text-xs text-slate-500">{{ $t('projects.liveUrlHelp') }}</p>
         </div>
         <div>
-          <label class="form-label">Source Code URL</label>
-          <input v-model="form.source_url" type="url" class="form-input" placeholder="https://github.com/..." />
+          <label class="form-label">{{ $t('projects.sourceUrl') }}</label>
+          <input v-model="form.source_url" type="url" class="form-input" :placeholder="$t('projects.sourceUrlPlaceholder')" />
+          <p class="mt-1 text-xs text-slate-500">{{ $t('projects.sourceUrlHelp') }}</p>
         </div>
       </div>
 
       <div class="flex justify-end gap-3">
-        <button type="button" class="btn-secondary" @click="resetForm">Cancel</button>
+        <button type="button" class="btn-secondary" @click="resetForm">{{ $t('common.cancel') }}</button>
         <button type="button" class="btn-primary" :disabled="saving" @click="handleSave">
           <Icon v-if="saving" name="mdi:loading" class="h-4 w-4 animate-spin" />
-          {{ editingId ? 'Update' : 'Create' }}
+          {{ editingId ? $t('common.update') : $t('common.create') }}
         </button>
       </div>
     </div>
@@ -192,7 +200,7 @@ onMounted(loadData)
 
     <div v-else-if="items.length === 0" class="card py-12 text-center">
       <Icon name="mdi:folder-multiple" class="mx-auto mb-3 h-12 w-12 text-slate-300" />
-      <p class="text-sm text-slate-500">No projects added yet</p>
+      <p class="text-sm text-slate-500">{{ $t('projects.noProjects') }}</p>
     </div>
 
     <div v-else class="space-y-3">

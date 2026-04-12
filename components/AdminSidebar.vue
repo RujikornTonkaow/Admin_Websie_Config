@@ -5,33 +5,34 @@ defineProps<{
   collapsed: boolean
 }>()
 
+const { t } = useI18n()
 const route = useRoute()
 const { hasRole, userRole } = useAuth()
 
-const allLinks: SidebarLink[] = [
-  { label: 'Dashboard', to: '/', icon: 'mdi:view-dashboard' },
-  { label: 'Site Settings', to: '/site-settings', icon: 'mdi:cog', minRole: 'user_account' },
-  { label: 'Hero', to: '/hero', icon: 'mdi:star-circle', minRole: 'user_account' },
-  { label: 'About', to: '/about', icon: 'mdi:account-details', minRole: 'user_account' },
-  { label: 'Skills', to: '/skills', icon: 'mdi:code-braces', minRole: 'user_account' },
-  { label: 'Projects', to: '/projects', icon: 'mdi:folder-multiple', minRole: 'user_account' },
-  { label: 'Experience', to: '/experiences', icon: 'mdi:briefcase', minRole: 'user_account' },
-  { label: 'Social Links', to: '/social-links', icon: 'mdi:link-variant', minRole: 'user_account' },
-  { label: 'Messages', to: '/contacts', icon: 'mdi:email' },
-  { label: 'Users', to: '/users', icon: 'mdi:account-group', minRole: 'admin' },
-]
+const allLinks = computed<SidebarLink[]>(() => [
+  { label: t('nav.dashboard'), to: '/', icon: 'mdi:view-dashboard' },
+  { label: t('nav.siteSettings'), to: '/site-settings', icon: 'mdi:cog', minRole: 'user_account' },
+  { label: t('nav.hero'), to: '/hero', icon: 'mdi:star-circle', minRole: 'user_account' },
+  { label: t('nav.about'), to: '/about', icon: 'mdi:account-details', minRole: 'user_account' },
+  { label: t('nav.skills'), to: '/skills', icon: 'mdi:code-braces', minRole: 'user_account' },
+  { label: t('nav.projects'), to: '/projects', icon: 'mdi:folder-multiple', minRole: 'user_account' },
+  { label: t('nav.experience'), to: '/experiences', icon: 'mdi:briefcase', minRole: 'user_account' },
+  { label: t('nav.socialLinks'), to: '/social-links', icon: 'mdi:link-variant', minRole: 'user_account' },
+  { label: t('nav.messages'), to: '/contacts', icon: 'mdi:email' },
+  { label: t('nav.users'), to: '/users', icon: 'mdi:account-group', minRole: 'admin' },
+])
 
 const visibleLinks = computed(() =>
-  allLinks.filter(link => !link.minRole || hasRole(link.minRole)),
+  allLinks.value.filter(link => !link.minRole || hasRole(link.minRole)),
 )
 
 const isActive = (path: string): boolean => route.path === path
 
 const roleBadge = computed(() => {
   const map: Record<string, { label: string; color: string }> = {
-    admin: { label: 'Admin', color: 'bg-red-500' },
-    user_account: { label: 'User', color: 'bg-blue-500' },
-    visitor: { label: 'Visitor', color: 'bg-slate-500' },
+    admin: { label: t('roles.admin'), color: 'bg-red-500' },
+    user_account: { label: t('roles.user'), color: 'bg-blue-500' },
+    visitor: { label: t('roles.visitor'), color: 'bg-slate-500' },
   }
   return map[userRole.value] ?? map.visitor
 })
@@ -47,7 +48,7 @@ const roleBadge = computed(() => {
         <Icon name="mdi:shield-crown" class="h-5 w-5 text-white" />
       </div>
       <span v-show="!collapsed" class="text-lg font-semibold text-white truncate">
-        Admin Panel
+        {{ $t('nav.adminPanel') }}
       </span>
     </div>
 
@@ -88,7 +89,7 @@ const roleBadge = computed(() => {
         @click="useAuth().logout()"
       >
         <Icon name="mdi:logout" class="h-5 w-5 shrink-0" />
-        <span v-show="!collapsed">Logout</span>
+        <span v-show="!collapsed">{{ $t('nav.logout') }}</span>
       </button>
     </div>
   </aside>

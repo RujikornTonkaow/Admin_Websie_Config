@@ -3,23 +3,25 @@ const emit = defineEmits<{
   'toggle-sidebar': []
 }>()
 
+const { t } = useI18n()
 const route = useRoute()
 const { isMockMode, userRole } = useAuth()
 
 const pageTitle = computed(() => {
-  const titles: Record<string, string> = {
-    '/': 'Dashboard',
-    '/site-settings': 'Site Settings',
-    '/hero': 'Hero Section',
-    '/about': 'About Section',
-    '/skills': 'Skills',
-    '/projects': 'Projects',
-    '/experiences': 'Experience',
-    '/social-links': 'Social Links',
-    '/contacts': 'Messages',
-    '/users': 'User Management',
+  const titleKeys: Record<string, string> = {
+    '/': 'nav.dashboard',
+    '/site-settings': 'nav.siteSettings',
+    '/hero': 'nav.hero',
+    '/about': 'nav.about',
+    '/skills': 'nav.skills',
+    '/projects': 'nav.projects',
+    '/experiences': 'nav.experience',
+    '/social-links': 'nav.socialLinks',
+    '/contacts': 'nav.messages',
+    '/users': 'nav.users',
   }
-  return titles[route.path] ?? 'Admin'
+  const key = titleKeys[route.path]
+  return key ? t(key) : t('nav.admin')
 })
 
 const isVisitorRole = computed(() => userRole.value === 'visitor')
@@ -44,7 +46,7 @@ const isVisitorRole = computed(() => userRole.value === 'visitor')
       class="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-200"
     >
       <Icon name="mdi:eye-outline" class="h-3.5 w-3.5" />
-      Read-only mode
+      {{ $t('common.readOnly') }}
     </div>
 
     <div
@@ -52,7 +54,9 @@ const isVisitorRole = computed(() => userRole.value === 'visitor')
       class="flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 border border-amber-200"
     >
       <Icon name="mdi:flask-outline" class="h-3.5 w-3.5" />
-      Demo Mode — changes won't be saved
+      {{ $t('common.demoMode') }}
     </div>
+
+    <LanguageSwitcher />
   </header>
 </template>

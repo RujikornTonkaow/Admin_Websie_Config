@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { About, Stat } from '~/types/admin'
 
+const { t } = useI18n()
 const api = useAdminApi()
 
 const form = reactive<{
@@ -30,7 +31,7 @@ const loadData = async () => {
       stats: data.stats ?? [],
     })
   } catch {
-    toast.value = { message: 'Failed to load about data', type: 'error' }
+    toast.value = { message: t('about.loadError'), type: 'error' }
   } finally {
     loading.value = false
   }
@@ -62,9 +63,9 @@ const handleSave = async () => {
       personality_tags: form.personality_tags,
       stats: form.stats.filter(s => s.value.trim() && s.label.trim()),
     })
-    toast.value = { message: 'About section saved successfully', type: 'success' }
+    toast.value = { message: t('about.saveSuccess'), type: 'success' }
   } catch {
-    toast.value = { message: 'Failed to save about section', type: 'error' }
+    toast.value = { message: t('about.saveError'), type: 'error' }
   } finally {
     saving.value = false
   }
@@ -83,24 +84,26 @@ onMounted(loadData)
 
     <form v-else class="card space-y-6" @submit.prevent="handleSave">
       <div>
-        <label for="about_title" class="form-label">Section Title</label>
-        <input id="about_title" v-model="form.title" type="text" class="form-input" placeholder="Passionate about building great software" />
+        <label for="about_title" class="form-label">{{ $t('about.sectionTitle') }}</label>
+        <input id="about_title" v-model="form.title" type="text" class="form-input" :placeholder="$t('about.sectionTitlePlaceholder')" />
+        <p class="mt-1 text-xs text-slate-500">{{ $t('about.sectionTitleHelp') }}</p>
       </div>
 
       <div>
         <div class="mb-2 flex items-center justify-between">
-          <label class="form-label mb-0">Bio Paragraphs</label>
+          <label class="form-label mb-0">{{ $t('about.bioParagraphs') }}</label>
           <button type="button" class="text-sm font-medium text-indigo-600 hover:text-indigo-700" @click="addParagraph">
-            + Add Paragraph
+            {{ $t('about.addParagraph') }}
           </button>
         </div>
+        <p class="mb-2 text-xs text-slate-500">{{ $t('about.bioParagraphsHelp') }}</p>
         <div class="space-y-3">
           <div v-for="(_, index) in form.bio_paragraphs" :key="index" class="flex gap-2">
             <textarea
               v-model="form.bio_paragraphs[index]"
               class="form-textarea flex-1"
               rows="3"
-              :placeholder="`Paragraph ${index + 1}`"
+              :placeholder="$t('about.paragraphPlaceholder', { index: index + 1 })"
             />
             <button
               v-if="form.bio_paragraphs.length > 1"
@@ -114,26 +117,30 @@ onMounted(loadData)
         </div>
       </div>
 
-      <FormTagInput
-        v-model="form.personality_tags"
-        label="Personality Tags"
-        placeholder="e.g. Problem Solver, Team Player"
-      />
+      <div>
+        <FormTagInput
+          v-model="form.personality_tags"
+          :label="$t('about.personalityTags')"
+          :placeholder="$t('about.personalityTagsPlaceholder')"
+        />
+        <p class="mt-1 text-xs text-slate-500">{{ $t('about.personalityTagsHelp') }}</p>
+      </div>
 
       <div>
         <div class="mb-2 flex items-center justify-between">
-          <label class="form-label mb-0">Stats</label>
+          <label class="form-label mb-0">{{ $t('about.stats') }}</label>
           <button type="button" class="text-sm font-medium text-indigo-600 hover:text-indigo-700" @click="addStat">
-            + Add Stat
+            {{ $t('about.addStat') }}
           </button>
         </div>
+        <p class="mb-2 text-xs text-slate-500">{{ $t('about.statsHelp') }}</p>
         <div class="space-y-3">
           <div v-for="(stat, index) in form.stats" :key="index" class="flex items-start gap-3">
             <div class="flex-1">
-              <input v-model="stat.value" type="text" class="form-input" placeholder="Value (e.g. 5+)" />
+              <input v-model="stat.value" type="text" class="form-input" :placeholder="$t('about.statValuePlaceholder')" />
             </div>
             <div class="flex-[2]">
-              <input v-model="stat.label" type="text" class="form-input" placeholder="Label (e.g. Years Experience)" />
+              <input v-model="stat.label" type="text" class="form-input" :placeholder="$t('about.statLabelPlaceholder')" />
             </div>
             <button
               type="button"
@@ -145,7 +152,7 @@ onMounted(loadData)
           </div>
 
           <div v-if="form.stats.length === 0" class="rounded-lg border-2 border-dashed border-slate-200 py-6 text-center text-sm text-slate-500">
-            No stats added yet
+            {{ $t('about.noStats') }}
           </div>
         </div>
       </div>
@@ -153,7 +160,7 @@ onMounted(loadData)
       <div class="flex justify-end border-t border-slate-200 pt-4">
         <button type="submit" class="btn-primary" :disabled="saving">
           <Icon v-if="saving" name="mdi:loading" class="h-4 w-4 animate-spin" />
-          {{ saving ? 'Saving...' : 'Save Changes' }}
+          {{ saving ? $t('common.saving') : $t('common.save') }}
         </button>
       </div>
     </form>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { SiteSettings, ContactMessage } from '~/types/admin'
 
+const { t } = useI18n()
 const api = useAdminApi()
 const { isEditor, userRole } = useAuth()
 
@@ -20,25 +21,25 @@ const loadDashboard = async () => {
       ])
 
       const unreadLabel = contactsRes.unreadCount > 0
-        ? `${contactsRes.items.length} (${contactsRes.unreadCount} new)`
+        ? `${contactsRes.items.length} (${contactsRes.unreadCount} ${t('contacts.unread', { count: '' }).trim()})`
         : String(contactsRes.items.length)
 
       stats.value = [
-        { label: 'Skills', value: String(skillsList.length), icon: 'mdi:code-braces', color: 'bg-blue-100 text-blue-600' },
-        { label: 'Projects', value: String(projectsList.length), icon: 'mdi:folder-multiple', color: 'bg-emerald-100 text-emerald-600' },
-        { label: 'Experience', value: String(experiencesList.length), icon: 'mdi:briefcase', color: 'bg-amber-100 text-amber-600' },
-        { label: 'Messages', value: unreadLabel, icon: 'mdi:email', color: 'bg-purple-100 text-purple-600' },
+        { label: t('dashboard.stats.skills'), value: String(skillsList.length), icon: 'mdi:code-braces', color: 'bg-blue-100 text-blue-600' },
+        { label: t('dashboard.stats.projects'), value: String(projectsList.length), icon: 'mdi:folder-multiple', color: 'bg-emerald-100 text-emerald-600' },
+        { label: t('dashboard.stats.experience'), value: String(experiencesList.length), icon: 'mdi:briefcase', color: 'bg-amber-100 text-amber-600' },
+        { label: t('dashboard.stats.messages'), value: unreadLabel, icon: 'mdi:email', color: 'bg-purple-100 text-purple-600' },
       ]
 
       recentMessages.value = contactsRes.items.slice(0, 5)
     } else {
       const contactsRes = await api.contacts.list()
       const unreadLabel = contactsRes.unreadCount > 0
-        ? `${contactsRes.items.length} (${contactsRes.unreadCount} new)`
+        ? `${contactsRes.items.length} (${contactsRes.unreadCount} ${t('contacts.unread', { count: '' }).trim()})`
         : String(contactsRes.items.length)
 
       stats.value = [
-        { label: 'Messages', value: unreadLabel, icon: 'mdi:email', color: 'bg-purple-100 text-purple-600' },
+        { label: t('dashboard.stats.messages'), value: unreadLabel, icon: 'mdi:email', color: 'bg-purple-100 text-purple-600' },
       ]
 
       recentMessages.value = contactsRes.items.slice(0, 5)
@@ -75,38 +76,38 @@ onMounted(loadDashboard)
       <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div v-if="isEditor" class="card">
           <div class="mb-4 flex items-center justify-between">
-            <h2 class="text-base font-semibold text-slate-900">Quick Actions</h2>
+            <h2 class="text-base font-semibold text-slate-900">{{ $t('dashboard.quickActions') }}</h2>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <NuxtLink to="/site-settings" class="flex items-center gap-3 rounded-lg border border-slate-200 p-3 transition-colors hover:bg-slate-50">
               <Icon name="mdi:cog" class="h-5 w-5 text-slate-500" />
-              <span class="text-sm font-medium text-slate-700">Site Settings</span>
+              <span class="text-sm font-medium text-slate-700">{{ $t('dashboard.siteSettings') }}</span>
             </NuxtLink>
             <NuxtLink to="/hero" class="flex items-center gap-3 rounded-lg border border-slate-200 p-3 transition-colors hover:bg-slate-50">
               <Icon name="mdi:star-circle" class="h-5 w-5 text-slate-500" />
-              <span class="text-sm font-medium text-slate-700">Edit Hero</span>
+              <span class="text-sm font-medium text-slate-700">{{ $t('dashboard.editHero') }}</span>
             </NuxtLink>
             <NuxtLink to="/projects" class="flex items-center gap-3 rounded-lg border border-slate-200 p-3 transition-colors hover:bg-slate-50">
               <Icon name="mdi:folder-plus" class="h-5 w-5 text-slate-500" />
-              <span class="text-sm font-medium text-slate-700">Add Project</span>
+              <span class="text-sm font-medium text-slate-700">{{ $t('dashboard.addProject') }}</span>
             </NuxtLink>
             <NuxtLink to="/skills" class="flex items-center gap-3 rounded-lg border border-slate-200 p-3 transition-colors hover:bg-slate-50">
               <Icon name="mdi:code-braces" class="h-5 w-5 text-slate-500" />
-              <span class="text-sm font-medium text-slate-700">Add Skill</span>
+              <span class="text-sm font-medium text-slate-700">{{ $t('dashboard.addSkill') }}</span>
             </NuxtLink>
           </div>
         </div>
 
         <div class="card">
           <div class="mb-4 flex items-center justify-between">
-            <h2 class="text-base font-semibold text-slate-900">Recent Messages</h2>
+            <h2 class="text-base font-semibold text-slate-900">{{ $t('dashboard.recentMessages') }}</h2>
             <NuxtLink to="/contacts" class="text-sm font-medium text-indigo-600 hover:text-indigo-700">
-              View all
+              {{ $t('dashboard.viewAll') }}
             </NuxtLink>
           </div>
 
           <div v-if="recentMessages.length === 0" class="py-8 text-center text-sm text-slate-500">
-            No messages yet
+            {{ $t('dashboard.noMessages') }}
           </div>
 
           <div v-else class="space-y-3">
