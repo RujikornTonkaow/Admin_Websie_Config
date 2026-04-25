@@ -48,4 +48,21 @@ export default defineNuxtConfig({
   },
 
   ssr: false,
+
+  vite: {
+    server: {
+      proxy: {
+        '/api': {
+          target: 'https://admin-api-config.onrender.com',
+          changeOrigin: true,
+          secure: true,
+        },
+        '/uploads': {
+          target: 'https://admin-api-config.onrender.com',
+          changeOrigin: true,
+          secure: true,
+        },
+      },
+    },
+  },
 })

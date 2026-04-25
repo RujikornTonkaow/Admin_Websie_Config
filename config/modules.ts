@@ -12,7 +12,7 @@ export interface AdminModule {
 export const adminModules: AdminModule[] = [
   {
     id: 'portfolio',
-    labelKey: 'nav.adminPanel',
+    labelKey: 'modules.portfolio',
     icon: 'mdi:briefcase-account',
     basePath: '/',
     apiNamespace: '/api/v1/admin',
@@ -24,7 +24,7 @@ export const adminModules: AdminModule[] = [
     icon: 'mdi:cart',
     basePath: '/shop',
     apiNamespace: '/api/v1/admin/shop',
-    enabled: false,
+    enabled: true,
   },
   {
     id: 'finance',
@@ -32,7 +32,7 @@ export const adminModules: AdminModule[] = [
     icon: 'mdi:cash-multiple',
     basePath: '/finance',
     apiNamespace: '/api/v1/admin/finance',
-    enabled: false,
+    enabled: true,
   },
 ]
 

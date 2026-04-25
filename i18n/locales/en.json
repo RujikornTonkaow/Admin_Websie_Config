@@ -313,6 +313,12 @@
     "deleteTitle": "Delete Message",
     "deleteMessage": "Are you sure you want to delete message from '{name}'?"
   },
+  "modules": {
+    "portfolio": "Portfolio",
+    "shop": "Shop",
+    "finance": "Finance",
+    "comingSoon": "Coming soon"
+  },
   "formTagInput": {
     "hint": "Press Enter or comma to add. Click outside to confirm."
   },
