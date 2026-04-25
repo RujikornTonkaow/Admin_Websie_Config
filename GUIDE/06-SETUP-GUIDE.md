@@ -319,6 +319,7 @@ Output จะอยู่ใน `.output/` directory พร้อม deploy ไ�
 | [03-TECH-STACK.md](./03-TECH-STACK.md) | Tech Stack ที่ใช้ |
 | [04-API-REFERENCE.md](./04-API-REFERENCE.md) | API Endpoints ทั้งหมด |
 | [05-AUTHENTICATION-RBAC.md](./05-AUTHENTICATION-RBAC.md) | ระบบ Auth & RBAC |
+| [07-MULTI-SITE-ARCHITECTURE.md](./07-MULTI-SITE-ARCHITECTURE.md) | แนวทางปรับเป็น Admin หลายเว็บไซต์ |
 | [README.md](../README.md) | README เดิมของโปรเจกต์ |
 | [RBAC_BACKEND_CHANGES.md](../RBAC_BACKEND_CHANGES.md) | รายละเอียดการแก้ไข Backend สำหรับ RBAC |
 | [Nuxt 3 Documentation](https://nuxt.com/docs) | เอกสาร Nuxt 3 อย่างเป็นทางการ |

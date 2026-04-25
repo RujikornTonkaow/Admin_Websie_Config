@@ -1,13 +1,9 @@
 import type { LoginRequest, LoginResponse, ApiEnvelope, UserRole } from '~/types/admin'
+import { hasMinimumRole, roleLevels } from '~/config/permissions'
 
 const TOKEN_KEY = 'admin_token'
 const MOCK_TOKEN = 'mock-demo-token'
 const MOCK_MODE_KEY = 'admin_mock_mode'
-const ROLE_LEVELS: Record<UserRole, number> = {
-  visitor: 1,
-  user_account: 2,
-  admin: 3,
-}
 
 const decodeTokenPayload = (jwt: string): Record<string, unknown> | null => {
   try {
@@ -55,10 +51,10 @@ export const useAuth = () => {
 
   const isAuthenticated = computed(() => !!token.value)
   const isAdmin = computed(() => userRole.value === 'admin')
-  const isEditor = computed(() => ROLE_LEVELS[userRole.value] >= ROLE_LEVELS.user_account)
+  const isEditor = computed(() => roleLevels[userRole.value] >= roleLevels.user_account)
 
   const hasRole = (minRole: UserRole): boolean => {
-    return ROLE_LEVELS[userRole.value] >= ROLE_LEVELS[minRole]
+    return hasMinimumRole(userRole.value, minRole)
   }
 
   const login = async (credentials: LoginRequest): Promise<void> => {

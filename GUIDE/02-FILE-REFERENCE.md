@@ -33,9 +33,16 @@ Website_Config/
 │   └── Toast.vue                    # แจ้งเตือนแบบ popup
 │
 ├── composables/
+│   ├── useApiClient.ts              # HTTP client กลาง
 │   ├── useAdminApi.ts               # API layer หลัก
+│   ├── usePortfolioApi.ts           # API เฉพาะ Portfolio
 │   ├── useAuth.ts                   # ระบบ Authentication
 │   └── useMockData.ts               # ข้อมูล mock สำหรับ Demo Mode
+│
+├── config/
+│   ├── modules.ts                   # นิยาม module/site domain
+│   ├── navigation.ts                # Sidebar navigation config
+│   └── permissions.ts               # Role และ route access rules
 │
 ├── i18n/
 │   ├── i18n.config.ts               # ตั้งค่า Vue I18n
@@ -64,7 +71,10 @@ Website_Config/
 │   └── users.vue                    # จัดการผู้ใช้งาน (Admin only)
 │
 ├── types/
-│   └── admin.ts                     # TypeScript types/interfaces
+│   ├── admin.ts                     # Re-export types เดิมเพื่อ backward compatibility
+│   ├── auth.ts                      # Auth/users/RBAC types
+│   ├── portfolio.ts                 # Portfolio domain types
+│   └── shared.ts                    # Shared API/helper types
 │
 └── GUIDE/
     └── (เอกสารที่คุณกำลังอ่าน)
@@ -253,7 +263,27 @@ NUXT_PUBLIC_API_BASE_URL=http://localhost:8080
 
 ---
 
-## Composables (3 ไฟล์)
+## Composables (5 ไฟล์)
+
+### `useApiClient.ts`
+
+**หน้าที่:** HTTP client กลางสำหรับทุก domain/module
+
+- อ่าน `runtimeConfig.public.apiBaseUrl`
+- แนบ Bearer token ผ่าน `getAuthHeaders()`
+- จัดการ error กลาง (`401` → logout, `403` → permission error)
+- มี `apiFetch<T>()` สำหรับ response ปกติ
+- มี `apiFetchWithMeta<T>()` สำหรับ response ที่ต้องใช้ `meta`
+- มี `upload()` และ `getUploadUrl()` สำหรับ file upload/preview
+
+### `usePortfolioApi.ts`
+
+**หน้าที่:** API เฉพาะ Portfolio domain
+
+- ครอบ API เดิมทั้งหมดของ Portfolio โดยใช้ `apiNamespace` จาก `config/modules.ts`
+- ยังใช้ endpoint เดิม เช่น `/api/v1/admin/projects`, `/api/v1/admin/hero`
+- รองรับ Mock Mode ผ่าน `useMockData.ts`
+- แยก Portfolio ออกจาก `useAdminApi.ts` เพื่อเตรียมเพิ่ม domain ใหม่ เช่น shop/finance
 
 ### `useAuth.ts`
 
@@ -281,13 +311,11 @@ NUXT_PUBLIC_API_BASE_URL=http://localhost:8080
 
 ### `useAdminApi.ts`
 
-**หน้าที่:** API layer กลางสำหรับสื่อสารกับ Backend ทุก endpoint
+**หน้าที่:** Compatibility wrapper สำหรับหน้าเดิม
 
-- ครอบทุก HTTP request ด้วย Bearer token
-- จัดการ error response (`ApiEnvelope` format)
-- 401 → auto logout
-- 403 → แสดงข้อความ permission error
-- Mock Mode → return ข้อมูลจาก `useMockData()` แทน HTTP
+- รวม `usePortfolioApi()` + users + upload/getUploadUrl
+- ทำให้หน้าเดิมที่เรียก `useAdminApi()` ยังทำงานได้โดยไม่ต้องแก้ imports
+- เป็น bridge ระหว่างโครงสร้าง Portfolio เดิมกับ multi-site architecture ใหม่
 
 | กลุ่ม method | Endpoints ที่ครอบ |
 |-------------|------------------|
@@ -416,17 +444,50 @@ NUXT_PUBLIC_API_BASE_URL=http://localhost:8080
 
 ---
 
-## Types (1 ไฟล์)
+## Config (3 ไฟล์)
+
+### `config/modules.ts`
+
+- นิยาม module/domain ที่ Admin Shell รู้จัก เช่น `portfolio`, `shop`, `finance`
+- ระบุ `basePath`, `apiNamespace`, icon, label key และสถานะ `enabled`
+- ตอนนี้ `portfolio` เปิดใช้งานจริง ส่วน `shop` และ `finance` เป็น placeholder สำหรับอนาคต
+
+### `config/navigation.ts`
+
+- รวม sidebar menu configuration ออกจาก `AdminSidebar.vue`
+- แต่ละรายการระบุ `labelKey`, `to`, `icon`, `minRole`, `moduleId`
+- ทำให้เพิ่มเมนูของเว็บไซต์/domain ใหม่ได้โดยไม่ต้องแก้ component
+
+### `config/permissions.ts`
+
+- รวม role hierarchy (`visitor`, `user_account`, `admin`)
+- รวม route access rules เช่น visitor allowed paths และ admin-only paths
+- มี helper functions เช่น `hasMinimumRole()`, `canAccessAdminOnlyPath()`, `canVisitorAccessPath()`
+
+---
+
+## Types (4 ไฟล์)
 
 ### `types/admin.ts`
 
-- TypeScript interfaces สำหรับทุก entity ในระบบ
-- **Enums/Types:** `UserRole` (`admin | user_account | visitor`), `SkillCategory` (`frontend | backend | devops | tools`)
-- **Entity types:** `SiteSettings`, `Hero`, `About`, `Stat`, `Skill`, `Project`, `Experience`, `SocialLink`, `ContactMessage`, `AdminUser`
-- **API types:** `ApiEnvelope<T>` (response format), `UploadResponse`, `ReorderRequest`
-- **Auth types:** `LoginRequest`, `LoginResponse`, `LoginUser`
-- **User management:** `CreateUserRequest`, `UpdateUserRequest`, `ChangePasswordRequest`
-- **UI types:** `SidebarLink` (`label`, `to`, `icon`, `minRole?`), `NavItem` (`label`, `href`)
+- Re-export types จาก `auth.ts`, `portfolio.ts`, `shared.ts`
+- เก็บ `SidebarLink` สำหรับ sidebar navigation
+- มีไว้เพื่อ backward compatibility ให้ imports เดิมจาก `~/types/admin` ยังใช้ได้
+
+### `types/auth.ts`
+
+- `UserRole`: `admin | user_account | visitor`
+- User management types: `AdminUser`, `CreateUserRequest`, `UpdateUserRequest`, `ChangePasswordRequest`
+- Login types: `LoginRequest`, `LoginResponse`, `LoginUser`
+
+### `types/portfolio.ts`
+
+- Portfolio domain types: `SiteSettings`, `Hero`, `About`, `Stat`, `Skill`, `Project`, `Experience`, `SocialLink`, `ContactMessage`
+- `SkillCategory`: `frontend | backend | devops | tools`
+
+### `types/shared.ts`
+
+- Shared API/helper types: `ApiEnvelope<T>`, `UploadResponse`, `ReorderRequest`, `NavItem`
 
 ---
 

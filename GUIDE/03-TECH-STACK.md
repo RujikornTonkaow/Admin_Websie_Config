@@ -86,7 +86,7 @@ Nuxt 3 เป็น framework ที่สร้างบน Vue 3 ให้ค�
 **บทบาท:** Type Safety
 
 - ทุกไฟล์ `.vue` ใช้ `<script setup lang="ts">`
-- Types/interfaces อยู่ใน `types/admin.ts`
+- Types/interfaces แยกตาม domain ใน `types/auth.ts`, `types/portfolio.ts`, `types/shared.ts` และ re-export ผ่าน `types/admin.ts`
 - Composables มี type annotations ครบถ้วน
 - `tsconfig.json` extends จาก Nuxt generated config
 

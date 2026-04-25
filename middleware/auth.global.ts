@@ -1,5 +1,4 @@
-const VISITOR_ALLOWED_PATHS = ['/', '/contacts', '/login']
-const ADMIN_ONLY_PATHS = ['/users']
+import { canAccessAdminOnlyPath, canVisitorAccessPath } from '~/config/permissions'
 
 export default defineNuxtRouteMiddleware((to) => {
   const { isAuthenticated, isAdmin, isEditor } = useAuth()
@@ -15,11 +14,11 @@ export default defineNuxtRouteMiddleware((to) => {
     return navigateTo('/login')
   }
 
-  if (ADMIN_ONLY_PATHS.includes(to.path) && !isAdmin.value) {
+  if (!canAccessAdminOnlyPath(to.path, isAdmin.value)) {
     return navigateTo('/')
   }
 
-  if (!isEditor.value && !VISITOR_ALLOWED_PATHS.includes(to.path)) {
+  if (!isEditor.value && !canVisitorAccessPath(to.path)) {
     return navigateTo('/')
   }
 })

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SidebarLink } from '~/types/admin'
+import { navigationLinks } from '~/config/navigation'
 
 defineProps<{
   collapsed: boolean
@@ -9,18 +10,14 @@ const { t } = useI18n()
 const route = useRoute()
 const { hasRole, userRole } = useAuth()
 
-const allLinks = computed<SidebarLink[]>(() => [
-  { label: t('nav.dashboard'), to: '/', icon: 'mdi:view-dashboard' },
-  { label: t('nav.siteSettings'), to: '/site-settings', icon: 'mdi:cog', minRole: 'user_account' },
-  { label: t('nav.hero'), to: '/hero', icon: 'mdi:star-circle', minRole: 'user_account' },
-  { label: t('nav.about'), to: '/about', icon: 'mdi:account-details', minRole: 'user_account' },
-  { label: t('nav.skills'), to: '/skills', icon: 'mdi:code-braces', minRole: 'user_account' },
-  { label: t('nav.projects'), to: '/projects', icon: 'mdi:folder-multiple', minRole: 'user_account' },
-  { label: t('nav.experience'), to: '/experiences', icon: 'mdi:briefcase', minRole: 'user_account' },
-  { label: t('nav.socialLinks'), to: '/social-links', icon: 'mdi:link-variant', minRole: 'user_account' },
-  { label: t('nav.messages'), to: '/contacts', icon: 'mdi:email' },
-  { label: t('nav.users'), to: '/users', icon: 'mdi:account-group', minRole: 'admin' },
-])
+const allLinks = computed<SidebarLink[]>(() =>
+  navigationLinks.map(link => ({
+    label: t(link.labelKey),
+    to: link.to,
+    icon: link.icon,
+    minRole: link.minRole,
+  })),
+)
 
 const visibleLinks = computed(() =>
   allLinks.value.filter(link => !link.minRole || hasRole(link.minRole)),

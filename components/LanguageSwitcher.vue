@@ -1,18 +1,23 @@
 <script setup lang="ts">
 const { locale, locales } = useI18n()
-const switchLocalePath = useSwitchLocalePath()
+
+type LocaleCode = 'en' | 'th'
+interface LocaleOption {
+  code: LocaleCode
+  name: string
+}
 
 const availableLocales = computed(() =>
-  (locales.value as { code: string; name: string }[]).filter(l => l.code !== locale.value),
+  (locales.value as LocaleOption[]).filter(l => l.code !== locale.value),
 )
 
 const currentLocale = computed(() =>
-  (locales.value as { code: string; name: string }[]).find(l => l.code === locale.value),
+  (locales.value as LocaleOption[]).find(l => l.code === locale.value),
 )
 
 const open = ref(false)
 
-const handleSwitch = (code: string) => {
+const handleSwitch = (code: LocaleCode) => {
   locale.value = code
   open.value = false
 }

@@ -81,29 +81,30 @@
 ### 3. Data Flow (การอ่าน-เขียนข้อมูล)
 
 ```
-┌──────────┐     ┌───────────────┐     ┌──────────────┐     ┌────────────┐
-│  Page    │────►│ useAdminApi() │────►│ Go Backend   │────►│  Database  │
-│  (.vue)  │     │ (composable)  │     │ REST API     │     │  (MongoDB) │
-│          │◄────│               │◄────│ Port: 8080   │◄────│            │
-└──────────┘     └───────────────┘     └──────────────┘     └────────────┘
-                        │
-                   Mock Mode?
-                        │ Yes
-                        ▼
-                 ┌──────────────┐
-                 │ useMockData()│
-                 │ (in-memory)  │
-                 └──────────────┘
+┌──────────┐     ┌───────────────┐     ┌─────────────────┐     ┌──────────────┐     ┌────────────┐
+│  Page    │────►│ useAdminApi() │────►│ usePortfolioApi │────►│ Go Backend   │────►│  Database  │
+│  (.vue)  │     │ (wrapper)     │     │ + useApiClient  │     │ REST API     │     │  (MongoDB) │
+│          │◄────│               │◄────│                 │◄────│ Port: 8080   │◄────│            │
+└──────────┘     └───────────────┘     └─────────────────┘     └──────────────┘     └────────────┘
+                                                 │
+                                            Mock Mode?
+                                                 │ Yes
+                                                 ▼
+                                          ┌──────────────┐
+                                          │ useMockData()│
+                                          │ (in-memory)  │
+                                          └──────────────┘
 ```
 
 **ขั้นตอนการทำงาน:**
 
 1. Page component เรียก `useAdminApi()` เพื่อดึงหรือบันทึกข้อมูล
-2. `useAdminApi` ตรวจว่าเป็น Mock Mode หรือไม่
+2. `useAdminApi` เป็น compatibility wrapper ที่ส่งงานต่อให้ `usePortfolioApi()` และ `useApiClient()`
+3. API layer ตรวจว่าเป็น Mock Mode หรือไม่
    - **Mock Mode** → ใช้ข้อมูลจาก `useMockData()` (ไม่ยิง HTTP)
    - **Real Mode** → ยิง HTTP request ไปที่ Go Backend พร้อม Bearer token
-3. Backend ประมวลผลและตอบกลับเป็น `ApiEnvelope<T>` format
-4. Page component แสดงผลข้อมูลที่ได้รับ
+4. Backend ประมวลผลและตอบกลับเป็น `ApiEnvelope<T>` format
+5. Page component แสดงผลข้อมูลที่ได้รับ
 
 ### 4. CRUD Flow (การจัดการข้อมูล)
 
