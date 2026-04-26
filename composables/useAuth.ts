@@ -1,5 +1,6 @@
 import type { LoginRequest, LoginResponse, ApiEnvelope, UserRole } from '~/types/admin'
 import { hasMinimumRole, roleLevels } from '~/config/permissions'
+import { useSiteContext } from '~/composables/useSiteContext'
 
 const TOKEN_KEY = 'admin_token'
 const MOCK_TOKEN = 'mock-demo-token'
@@ -18,7 +19,8 @@ const decodeTokenPayload = (jwt: string): Record<string, unknown> | null => {
 
 export const useAuth = () => {
   const config = useRuntimeConfig()
-  const apiBase = config.public.apiBaseUrl
+  const apiBase = config.public.apiBaseUrl || 'http://localhost:8080'
+  const { clearSelectedSite } = useSiteContext()
   const token = useState<string | null>('auth_token', () => {
     if (import.meta.client) {
       return localStorage.getItem(TOKEN_KEY)
@@ -36,9 +38,9 @@ export const useAuth = () => {
   const userRole = useState<UserRole>('user_role', () => {
     if (import.meta.client && token.value && !isMockMode.value) {
       const payload = decodeTokenPayload(token.value)
-      return (payload?.role as UserRole) ?? 'visitor'
+      return (payload?.role as UserRole) ?? 'viewer'
     }
-    return isMockMode.value ? 'admin' : 'visitor'
+    return isMockMode.value ? 'super_admin' : 'viewer'
   })
 
   const currentUserId = useState<string>('current_user_id', () => {
@@ -50,8 +52,10 @@ export const useAuth = () => {
   })
 
   const isAuthenticated = computed(() => !!token.value)
-  const isAdmin = computed(() => userRole.value === 'admin')
-  const isEditor = computed(() => roleLevels[userRole.value] >= roleLevels.user_account)
+  const isSuperAdmin = computed(() => userRole.value === 'super_admin')
+  const isAdmin = computed(() => roleLevels[userRole.value] >= roleLevels.admin)
+  const isEditor = computed(() => roleLevels[userRole.value] >= roleLevels.editor)
+  const canManageUsers = computed(() => roleLevels[userRole.value] >= roleLevels.admin)
 
   const hasRole = (minRole: UserRole): boolean => {
     return hasMinimumRole(userRole.value, minRole)
@@ -77,7 +81,7 @@ export const useAuth = () => {
       isMockMode.value = false
 
       const payload = decodeTokenPayload(jwt)
-      userRole.value = (payload?.role as UserRole) ?? 'visitor'
+      userRole.value = (payload?.role as UserRole) ?? 'viewer'
       currentUserId.value = (payload?.sub as string) ?? ''
 
       if (import.meta.client) {
@@ -98,7 +102,7 @@ export const useAuth = () => {
   const loginDemo = () => {
     token.value = MOCK_TOKEN
     isMockMode.value = true
-    userRole.value = 'admin'
+    userRole.value = 'super_admin'
     currentUserId.value = 'mock-user-id'
     if (import.meta.client) {
       localStorage.setItem(TOKEN_KEY, MOCK_TOKEN)
@@ -109,8 +113,9 @@ export const useAuth = () => {
   const logout = () => {
     token.value = null
     isMockMode.value = false
-    userRole.value = 'visitor'
+    userRole.value = 'viewer'
     currentUserId.value = ''
+    clearSelectedSite()
     if (import.meta.client) {
       localStorage.removeItem(TOKEN_KEY)
       localStorage.removeItem(MOCK_MODE_KEY)
@@ -129,8 +134,10 @@ export const useAuth = () => {
     isMockMode,
     userRole,
     currentUserId,
+    isSuperAdmin,
     isAdmin,
     isEditor,
+    canManageUsers,
     hasRole,
     login,
     loginDemo,

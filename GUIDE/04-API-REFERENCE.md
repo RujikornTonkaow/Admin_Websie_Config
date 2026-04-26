@@ -4,6 +4,20 @@
 
 ---
 
+## Multi-site Cutover Notice
+
+Portfolio CRUD API เปลี่ยนเป็น site-scoped routes แบบใหม่ทั้งหมดแล้ว และไม่รองรับ legacy routes เดิม เช่น `/api/v1/admin/projects`, `/api/v1/admin/skills`, `/api/v1/admin/hero`, `/api/v1/admin/upload`
+
+รูปแบบใหม่:
+
+```text
+/api/v1/admin/sites/:siteId/portfolio/...
+```
+
+`Website_Config` ต้องโหลด `GET /api/v1/admin/sites` ก่อน แล้วตั้ง `selectedSiteId` ผ่าน `useSiteContext.ts` ก่อนเรียก Portfolio API ทุกครั้ง ดูรายละเอียดเต็มใน `GUIDE/07-MULTI-SITE-ARCHITECTURE.md`
+
+---
+
 ## Base URL
 
 ```

@@ -19,12 +19,13 @@ const pageTitle = computed(() => {
     '/social-links': 'nav.socialLinks',
     '/contacts': 'nav.messages',
     '/users': 'nav.users',
+    '/sites': 'nav.sites',
   }
   const key = titleKeys[route.path]
   return key ? t(key) : t('nav.admin')
 })
 
-const isVisitorRole = computed(() => userRole.value === 'visitor')
+const isViewerRole = computed(() => userRole.value === 'viewer')
 </script>
 
 <template>
@@ -42,7 +43,7 @@ const isVisitorRole = computed(() => userRole.value === 'visitor')
     <div class="flex-1" />
 
     <div
-      v-if="isVisitorRole && !isMockMode"
+      v-if="isViewerRole && !isMockMode"
       class="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-200"
     >
       <Icon name="mdi:eye-outline" class="h-3.5 w-3.5" />

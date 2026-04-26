@@ -2,8 +2,9 @@ import type { ApiEnvelope, UploadResponse } from '~/types/shared'
 
 export const useApiClient = () => {
   const config = useRuntimeConfig()
-  const apiBase = config.public.apiBaseUrl
+  const apiBase = config.public.apiBaseUrl || 'http://localhost:8080'
   const { getAuthHeaders, logout, isMockMode } = useAuth()
+  const { getPortfolioAdminPath } = useSiteContext()
 
   const handleApiError = (err: unknown): never => {
     if (err instanceof Error && 'statusCode' in err) {
@@ -69,7 +70,7 @@ export const useApiClient = () => {
     const formData = new FormData()
     formData.append('file', file)
 
-    const res = await $fetch<ApiEnvelope<UploadResponse>>(`${apiBase}/api/v1/admin/upload`, {
+    const res = await $fetch<ApiEnvelope<UploadResponse>>(`${apiBase}${getPortfolioAdminPath('upload')}`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: formData,

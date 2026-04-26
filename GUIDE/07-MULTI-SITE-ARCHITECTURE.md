@@ -4,20 +4,31 @@
 
 ---
 
+## ใครต้องอ่านเอกสารนี้
+
+- `Website_Config` — ต้องอ่านเพื่อปรับ Admin Panel ให้เลือก site ที่กำลังจัดการ และส่ง `siteId` ไปกับ API
+- `Admin_Website_Management` — ต้องอ่านเพื่อเพิ่ม data model, API, permission และ ownership validation แบบ multi-site
+- `Portfolio` หรือโปรเจกต์เว็บ port หน้าบ้าน — ต้องอ่านเพื่อเปลี่ยนจากการโหลดข้อมูล global เป็นโหลดข้อมูลตาม domain/site
+
+ถ้าเริ่มทำ requirement ที่ user หลายคนมีเว็บ Portfolio แยกกันจริง เอกสารนี้ต้องถูกส่งให้ทั้ง 3 โปรเจกต์อ่านก่อนเริ่มแก้ เพราะ contract หลักคือ `site_id` ต้องตรงกันทุกฝั่ง
+
+---
+
 ## เป้าหมายของโครงสร้างใหม่
 
-โปรเจกต์นี้ยังคงจัดการ Portfolio ผ่าน route และ API เดิมได้ตามปกติ แต่โครงสร้างภายในถูกเตรียมให้เพิ่ม module อื่นได้ง่าย เช่น:
+โปรเจกต์นี้จัดการ Portfolio ผ่าน route หน้า admin เดิมได้ เช่น `/projects`, `/hero`, `/skills` แต่ API backend ถูกเปลี่ยนเป็น site-scoped routes แบบใหม่ทั้งหมด เพื่อรองรับ user หลายคนที่มี Portfolio แยกกัน เช่น:
 
 - `portfolio` — เว็บ Portfolio ปัจจุบัน
 - `shop` — เว็บซื้อของในอนาคต
 - `finance` — เว็บบันทึกรายรับรายจ่ายในอนาคต
 
-แนวทางนี้เรียกว่า **safe prepare**:
+แนวทางปัจจุบันคือ **multi-site cutover**:
 
 - ไม่ย้าย route เดิม เช่น `/projects`, `/hero`, `/skills`
-- ไม่เปลี่ยน API เดิม เช่น `/api/v1/admin/projects`
+- เปลี่ยน API เดิม เช่น `/api/v1/admin/projects` เป็น `/api/v1/admin/sites/:siteId/portfolio/projects`
+- ไม่รองรับ legacy portfolio API routes เดิมแล้ว
 - แยก frontend structure ให้พร้อมรองรับ domain ใหม่
-- ยังไม่บังคับให้ backend ต้อง refactor ทันที
+- backend ต้องมี `sites`, `site_members` และ `site_id` ก่อนใช้งานจริง
 
 ---
 
@@ -32,11 +43,13 @@ config/
 composables/
 ├── useApiClient.ts      # HTTP client กลาง
 ├── usePortfolioApi.ts   # API เฉพาะ Portfolio
+├── useSiteContext.ts    # selected site/workspace state สำหรับ multi-site
 └── useAdminApi.ts       # compatibility wrapper สำหรับหน้าเดิม
 
 types/
 ├── shared.ts       # shared API/helper types
 ├── auth.ts         # auth/users/RBAC types
+├── site.ts         # managed sites และ member role
 ├── portfolio.ts    # portfolio domain types
 └── admin.ts        # re-export เพื่อให้ imports เดิมยังใช้ได้
 ```
@@ -82,7 +95,7 @@ types/
 ตอนนี้เมนูถูกย้ายไปที่ `config/navigation.ts` แล้ว:
 
 ```ts
-{ labelKey: 'nav.projects', to: '/projects', icon: 'mdi:folder-multiple', minRole: 'user_account', moduleId: 'portfolio' }
+{ labelKey: 'nav.projects', to: '/projects', icon: 'mdi:folder-multiple', minRole: 'editor', moduleId: 'portfolio' }
 ```
 
 ข้อดี:
@@ -98,26 +111,42 @@ types/
 
 ### Portfolio API ปัจจุบัน
 
-Portfolio ยังคงใช้ endpoint เดิม:
+Portfolio ใช้ endpoint ใหม่ที่มี `siteId` เท่านั้น:
 
 ```text
-/api/v1/admin/site-settings
-/api/v1/admin/hero
-/api/v1/admin/about
-/api/v1/admin/skills
+/api/v1/admin/sites/:siteId/portfolio/site-settings
+/api/v1/admin/sites/:siteId/portfolio/hero
+/api/v1/admin/sites/:siteId/portfolio/about
+/api/v1/admin/sites/:siteId/portfolio/skills
+/api/v1/admin/sites/:siteId/portfolio/projects
+/api/v1/admin/sites/:siteId/portfolio/experiences
+/api/v1/admin/sites/:siteId/portfolio/social-links
+/api/v1/admin/sites/:siteId/portfolio/contacts
+/api/v1/admin/sites/:siteId/portfolio/upload
+```
+
+`Website_Config` โหลดรายการ site จาก `GET /api/v1/admin/sites` แล้วเก็บ site ที่เลือกไว้ใน `useSiteContext.ts` จากนั้น `usePortfolioApi.ts` จะประกอบ path ด้วย `selectedSiteId`
+
+### Site-scoped API สำหรับ Portfolio หลายเว็บ
+
+เมื่อ backend รองรับ multi-site แล้ว Portfolio API ต้องเปลี่ยนจาก endpoint กลาง:
+
+```text
 /api/v1/admin/projects
-/api/v1/admin/experiences
-/api/v1/admin/social-links
-/api/v1/admin/contacts
 ```
 
-`usePortfolioApi.ts` ใช้ `apiNamespace` จาก `config/modules.ts` ซึ่งตอนนี้เป็น:
+เป็น endpoint ที่มี `siteId`:
 
 ```text
-/api/v1/admin
+/api/v1/admin/sites/:siteId/portfolio/projects
 ```
 
-ดังนั้น endpoint เดิมยังคงเหมือนเดิมทั้งหมด
+`Website_Config` เตรียม `useSiteContext.ts` ไว้แล้ว:
+
+- ถ้า `selectedSiteId` ยังเป็น `null` → ห้ามเรียก Portfolio API และต้องให้ user เลือก site ก่อน
+- ถ้ามี `selectedSiteId` → ใช้ site-scoped endpoint เช่น `/api/v1/admin/sites/site-a/portfolio/projects`
+
+ดังนั้น backend ต้องพร้อม route `/sites/:siteId/...` ก่อนใช้งาน admin จริง และไม่ต้องเก็บ route legacy คู่กัน
 
 ### API สำหรับเว็บใหม่ในอนาคต
 
@@ -173,44 +202,160 @@ Backend ควรเพิ่ม `site_id` หรือ `workspace_id`
 Frontend ควรเพิ่ม state สำหรับ selected site/workspace:
 
 ```text
-composables/useWorkspace.ts
+composables/useSiteContext.ts
 ```
 
 และส่ง `siteId`/`workspaceId` เข้า API composable ของแต่ละ domain
 
 ---
 
-## Auth และ Users ต้องแก้ตอนนี้ไหม
+## Requirement ปัจจุบัน: user หลายคนมี Portfolio แยกกัน
 
-ตอนนี้ **ยังไม่จำเป็นต้องแก้ users/auth ทันที**
+Requirement นี้ต้องใช้ multi-site จริง ไม่ใช่แค่ role `super_admin`, `admin`, `editor`, `viewer`
 
-เหตุผล:
+ตัวอย่าง behavior:
 
-- Auth ยังเป็น cross-cutting concern ใช้ร่วมได้ทุก module
-- `users` ยังอยู่ใน `useAdminApi.ts` เป็น compatibility layer ได้
-- Role ปัจจุบัน (`admin`, `user_account`, `visitor`) ยังพอใช้กับ Portfolio เดิม
-- การแยก API client แล้วทำให้แก้ backend auth/users ทีหลังได้ง่ายขึ้น
+- user A มีสิทธิ์ site A เท่านั้น → เห็นและแก้ได้เฉพาะ Portfolio ของ site A
+- user B มีสิทธิ์ site B เท่านั้น → เห็นและแก้ได้เฉพาะ Portfolio ของ site B
+- user A และ user B เป็นสมาชิกของ site A และ site B → ทั้งคู่เห็น selector/เมนูสำหรับจัดการ 2 site
+- เว็บ port หน้าบ้านของ site A และ site B ต้องโหลดข้อมูลคนละชุดตาม domain หรือ subdomain
 
-แต่ถ้าระบบเริ่มมีหลาย module จริง ควรเปลี่ยนจาก role กว้างๆ เป็น permission-based access control
-
-ตัวอย่าง permission:
-
-```text
-portfolio:read
-portfolio:write
-shop:products:read
-shop:orders:write
-finance:reports:read
-users:manage
-```
+Backend ต้องเป็น source of truth ว่า user ไหนเข้าถึง site ไหนได้ Frontend แค่ช่วยแสดง UI ตามข้อมูลที่ backend ส่งมา ห้ามใช้ frontend อย่างเดียวเป็นตัวกันสิทธิ์
 
 ---
 
-## สิ่งที่ Backend API ควรปรับในอนาคต
+## Data Model ที่ Backend ต้องเพิ่ม
 
-Backend `Admin_Website_Management` ยังไม่จำเป็นต้องปรับทันทีถ้ายังจัดการ Portfolio อย่างเดียว
+แนะนำให้เพิ่ม collection/table อย่างน้อย:
 
-ควรปรับเมื่อเริ่มเพิ่มเว็บ/domain ใหม่ เช่น shop หรือ finance
+```text
+sites
+- id
+- name
+- slug
+- domains
+- created_at
+- updated_at
+
+site_members
+- site_id
+- user_id
+- role: owner | editor | viewer
+- created_at
+- updated_at
+```
+
+ข้อมูล Portfolio ทุก collection ต้องมี `site_id`:
+
+```text
+site_settings.site_id
+hero.site_id
+about.site_id
+skills.site_id
+projects.site_id
+experiences.site_id
+social_links.site_id
+contacts.site_id
+uploads.site_id
+```
+
+ต้องทำ unique index โดยผูกกับ `site_id` เช่น `skills` อาจ unique ตาม `(site_id, name)` แทน unique แค่ `name` เพื่อไม่ให้ข้อมูลของคนละเว็บชนกัน
+
+---
+
+## Contract ที่ Backend ต้องทำ
+
+Admin API:
+
+```text
+GET    /api/v1/admin/sites
+POST   /api/v1/admin/sites
+GET    /api/v1/admin/sites/:siteId
+PUT    /api/v1/admin/sites/:siteId
+DELETE /api/v1/admin/sites/:siteId
+
+GET    /api/v1/admin/sites/:siteId/portfolio/site-settings
+PUT    /api/v1/admin/sites/:siteId/portfolio/site-settings
+GET    /api/v1/admin/sites/:siteId/portfolio/hero
+PUT    /api/v1/admin/sites/:siteId/portfolio/hero
+GET    /api/v1/admin/sites/:siteId/portfolio/about
+PUT    /api/v1/admin/sites/:siteId/portfolio/about
+GET    /api/v1/admin/sites/:siteId/portfolio/skills
+POST   /api/v1/admin/sites/:siteId/portfolio/skills
+PUT    /api/v1/admin/sites/:siteId/portfolio/skills/:id
+DELETE /api/v1/admin/sites/:siteId/portfolio/skills/:id
+GET    /api/v1/admin/sites/:siteId/portfolio/projects
+POST   /api/v1/admin/sites/:siteId/portfolio/projects
+PUT    /api/v1/admin/sites/:siteId/portfolio/projects/:id
+DELETE /api/v1/admin/sites/:siteId/portfolio/projects/:id
+```
+
+ทุก handler ต้อง:
+
+- อ่าน `user_id` จาก JWT context
+- ตรวจว่า `user_id` เป็น member ของ `siteId`
+- ตรวจ role ราย site เช่น `owner/editor/viewer`
+- query/update ข้อมูลด้วย filter ที่มี `site_id` เสมอ
+- ห้ามรับ `site_id` จาก request body แล้วเชื่อทันที ให้ใช้ `siteId` จาก path ที่ผ่าน permission check แล้ว
+
+Public API สำหรับเว็บ port:
+
+```text
+GET /api/v1/public/sites/by-domain?host=:hostname
+GET /api/v1/public/sites/:siteId/portfolio
+POST /api/v1/public/sites/:siteId/portfolio/contacts
+```
+
+หรือ backend จะรวมเป็น endpoint เดียวก็ได้:
+
+```text
+GET /api/v1/public/portfolio?host=:hostname
+```
+
+แต่ต้องมี domain mapping ใน backend เพื่อรู้ว่า `user-a.com` คือ site A และ `user-b.com` คือ site B
+
+---
+
+## สิ่งที่โปรเจกต์ Portfolio/port ต้องปรับ
+
+เว็บ port หน้าบ้านต้องเลิกโหลดข้อมูลแบบ global ถ้า backend เดิมมี endpoint เช่น `/api/v1/public/portfolio` ที่คืนข้อมูลชุดเดียว ต้องเปลี่ยนเป็นโหลดตาม domain/site
+
+Flow ที่แนะนำ:
+
+```text
+1. อ่าน host ปัจจุบันจาก browser/server request
+2. เรียก backend เพื่อ resolve host เป็น site
+3. ใช้ siteId โหลด hero, about, skills, projects, experiences, social links
+4. contact form ต้อง POST ไปที่ siteId เดียวกัน
+```
+
+ถ้าเว็บ port เป็น Nuxt/SSR ควร resolve host ฝั่ง server เพื่อให้ SEO และ metadata ถูกต้องตั้งแต่ render แรก ถ้าเป็น SPA อย่างเดียวต้อง resolve ตอน client load และจัด loading/error state ให้ชัดเจน
+
+---
+
+## Auth, Users และ Site Membership
+
+ระบบ multi-site ใช้ role ใหม่:
+
+- `super_admin`: เห็นทุก site และจัดการทุก user ได้
+- `admin`: เห็น/จัดการเฉพาะ site ที่ได้รับสิทธิ์ และจัดการ user ใน scope เดียวกันได้
+- `editor`: แก้ content ของ site ที่ได้รับสิทธิ์ แต่ไม่เห็น User Management
+- `viewer`: เห็นเฉพาะ Messages/Contacts ของ site ที่ได้รับสิทธิ์
+
+`site_members` เป็น access list เท่านั้น ไม่ใช้ per-site role ใน UI แล้ว หน้า Users ของ `Website_Config` ต้องให้เลือกได้ว่า user แต่ละคนเข้าถึง site ไหนบ้าง โดยเรียก:
+
+```text
+GET /api/v1/admin/users/:id/memberships
+PUT /api/v1/admin/users/:id/memberships
+```
+
+เมื่อ user login แล้ว sidebar จะแสดงเฉพาะ site ที่ backend ส่งมาจาก `GET /api/v1/admin/sites`
+
+---
+
+## สิ่งที่ Backend API ต้องปรับตอนนี้
+
+Backend `Admin_Website_Management` ต้องใช้ multi-site เป็น contract หลักแล้ว เพราะ requirement คือ user หลายคนมี Portfolio แยกกัน การแยกข้อมูลจริงต้องเกิดที่ database และ API ไม่ใช่แค่ frontend
 
 ### 1. แยก API namespace ตาม domain
 
@@ -223,17 +368,12 @@ Backend `Admin_Website_Management` ยังไม่จำเป็นต้อ
 เป็น:
 
 ```text
-/api/v1/admin/portfolio/projects
+/api/v1/admin/sites/:siteId/portfolio/projects
 /api/v1/admin/shop/products
 /api/v1/admin/finance/expenses
 ```
 
-หรือถ้าต้อง preserve backward compatibility:
-
-```text
-/api/v1/admin/projects                  # legacy portfolio route
-/api/v1/admin/portfolio/projects        # new explicit route
-```
+ไม่ต้อง preserve backward compatibility กับ legacy Portfolio routes เดิม ให้ลบ `/api/v1/admin/projects`, `/api/v1/admin/skills`, `/api/v1/admin/hero`, `/api/v1/admin/upload` และ route เดิมอื่นในกลุ่ม Portfolio ออกทั้งหมด
 
 ### 2. แยก handler/service/repository ตาม domain
 
@@ -283,28 +423,27 @@ user_workspace_roles
 
 ---
 
-## Migration Plan แนะนำ
+## Migration Plan แนะนำตาม decision ล่าสุด
 
-### Phase 1 — Frontend safe prepare (ทำแล้วในโปรเจกต์นี้)
+### Phase 1 — Backend multi-site cutover
 
-- เพิ่ม config modules/navigation/permissions
-- แยก shared API client
-- แยก portfolio API composable
-- แยก types ตาม domain
-- คง route/API เดิมไว้
+- ลบ legacy Portfolio routes เดิมออก
+- เพิ่ม `sites`, `site_members`, `site_id` ใน database schema
+- ตั้ง `RESET_DATABASE_ON_START=true` เพื่อ reset database/collections เก่า แล้ว seed ใหม่ตอนรัน server
+- เพิ่ม site-scoped admin routes และ public routes ตามเอกสารนี้
 
-### Phase 2 — เพิ่ม domain ใหม่ใน frontend
+### Phase 2 — Website_Config site selector
 
-- เพิ่ม types ใหม่ เช่น `types/shop.ts`
-- เพิ่ม API composable เช่น `useShopApi.ts`
-- เพิ่ม pages ใหม่ใต้ route namespace เช่น `pages/shop/products.vue`
-- เพิ่มเมนูใน `config/navigation.ts`
+- โหลด `GET /api/v1/admin/sites`
+- เก็บ `selectedSiteId`
+- เรียก Portfolio API ด้วย `/api/v1/admin/sites/:siteId/portfolio/...` เท่านั้น
+- อัปโหลดไฟล์ผ่าน `/api/v1/admin/sites/:siteId/portfolio/upload`
 
-### Phase 3 — Backend namespace
+### Phase 3 — Portfolio/port frontend
 
-- เพิ่ม endpoint namespace สำหรับ domain ใหม่
-- ยังไม่ต้องลบ endpoint เดิมของ Portfolio
-- เพิ่ม backend handler/service/repository ตาม domain
+- resolve site จาก hostname/domain
+- โหลด public portfolio data ตาม `siteId`
+- ส่ง contact form ไปยัง `/api/v1/public/sites/:siteId/portfolio/contacts`
 
 ### Phase 4 — Permission-based RBAC
 
@@ -312,18 +451,26 @@ user_workspace_roles
 - ปรับ frontend navigation/middleware ให้เช็ค permission ราย module
 - ปรับ backend middleware ให้เช็ค permission ราย endpoint
 
-### Phase 5 — Multi-tenant / Multi-site
+### Phase 5 — เพิ่ม domain ใหม่ใน frontend
 
-- เพิ่ม site/workspace selector
-- เพิ่ม `site_id`/`workspace_id` ใน API และ database schema
-- แยกข้อมูลตาม tenant
+- เพิ่ม types ใหม่ เช่น `types/shop.ts`
+- เพิ่ม API composable เช่น `useShopApi.ts`
+- เพิ่ม pages ใหม่ใต้ route namespace เช่น `pages/shop/products.vue`
+- เพิ่มเมนูใน `config/navigation.ts`
+
+### Phase 6 — Public domain routing
+
+- เพิ่ม domain/subdomain mapping ใน backend
+- ปรับเว็บ port ให้ resolve site จาก hostname
+- เพิ่ม public API ที่คืนข้อมูลเฉพาะ site
+- ตั้ง CORS/hosting ให้รองรับ admin domain และ public portfolio domains ตาม `GUIDE/08-CORS-AND-LOCAL-DEV.md`
 
 ---
 
 ## สรุปคำตอบเรื่อง API
 
 - เว็บใหม่ในอนาคต **ไม่จำเป็นต้องใช้ API เส้นเดิมของ Portfolio**
-- API เดิมสามารถเก็บไว้สำหรับ Portfolio ได้
-- Users/Auth สามารถค่อยแก้ในโปรเจกต์ API ทีหลังได้
-- สิ่งที่ควรทำตอนนี้คือแยก frontend architecture ให้ domain ใหม่ไม่ปนกับ Portfolio
-- เมื่อเริ่มมีเว็บใหม่จริง ค่อยเพิ่ม backend namespace และ permission model
+- API เดิมของ Portfolio ไม่ต้องเก็บไว้ ให้ใช้ site-scoped routes ใหม่ทั้งหมด
+- ข้อมูล portfolio เดิมไม่ต้อง migrate ให้ reset database/collections แล้ว seed ใหม่
+- Users/Auth ยังใช้ JWT เดิมได้ แต่ backend ต้องเพิ่ม site membership check สำหรับทุก route ที่มี `siteId`
+- `Website_Config` ต้องเลือก site ก่อนเรียก Portfolio API

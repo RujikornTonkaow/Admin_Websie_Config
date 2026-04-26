@@ -29,13 +29,15 @@
     "socialLinks": "Social Links",
     "messages": "Messages",
     "users": "User Management",
+    "sites": "Site Management",
     "admin": "Admin",
     "logout": "Logout"
   },
   "roles": {
+    "superAdmin": "Super Admin",
     "admin": "Admin",
-    "user": "User",
-    "visitor": "Visitor"
+    "editor": "Editor",
+    "viewer": "Viewer"
   },
   "login": {
     "title": "Admin Panel",
@@ -268,9 +270,10 @@
     "role": "Role",
     "roleHelp": "Determines what this user can access and modify",
     "roleDescriptions": {
-      "admin": "Full access including user management",
-      "user": "Content management, no user management",
-      "visitor": "Read-only access to messages"
+      "superAdmin": "System owner with full access to every site and user",
+      "admin": "Manage users and content only for assigned sites",
+      "editor": "Edit content for assigned sites, no user management",
+      "viewer": "View messages only"
     },
     "password": "Password",
     "passwordPlaceholder": "Minimum 8 characters",
@@ -290,6 +293,9 @@
     "passwordMinLength": "Password must be at least 8 characters",
     "passwordMismatch": "Passwords do not match",
     "noUsers": "No users found",
+    "loadError": "Failed to load users",
+    "siteAccess": "Site access",
+    "noSiteAccess": "No site access",
     "createSuccess": "User created",
     "updateSuccess": "User updated",
     "passwordChanged": "Password changed",
@@ -318,6 +324,37 @@
     "shop": "Shop",
     "finance": "Finance",
     "comingSoon": "Coming soon"
+  },
+  "sites": {
+    "currentSite": "Current site",
+    "noSites": "No portfolio sites are available for this account. Please create or seed a site in the backend first.",
+    "count": "{count} site(s)",
+    "newSite": "New Site",
+    "editSite": "Edit Site",
+    "createSite": "Create Site",
+    "createSuccess": "Site created",
+    "updateSuccess": "Site updated",
+    "deleteSuccess": "Site deleted",
+    "createError": "Failed to create site",
+    "updateError": "Failed to update site",
+    "deleteError": "Failed to delete site",
+    "loadError": "Failed to load sites",
+    "deleteTitle": "Delete Site",
+    "deleteMessage": "Are you sure you want to delete site '{name}'? This will also remove its memberships.",
+    "name": "Name",
+    "namePlaceholder": "Portfolio 3",
+    "slug": "Slug",
+    "slugPlaceholder": "portfolio-3",
+    "type": "Type",
+    "domains": "Domains",
+    "domainsPlaceholder": "localhost:3003",
+    "domainsHelp": "Use one domain per line or comma-separated values.",
+    "required": "Name, slug, and at least one domain are required.",
+    "roles": {
+      "owner": "Owner",
+      "editor": "Editor",
+      "viewer": "Viewer"
+    }
   },
   "formTagInput": {
     "hint": "Press Enter or comma to add. Click outside to confirm."

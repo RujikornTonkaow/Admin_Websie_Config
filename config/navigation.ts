@@ -7,13 +7,14 @@ export interface NavigationLinkConfig extends Omit<SidebarLink, 'label'> {
 
 export const navigationLinks: NavigationLinkConfig[] = [
   { labelKey: 'nav.dashboard', to: '/', icon: 'mdi:view-dashboard', moduleId: 'portfolio' },
-  { labelKey: 'nav.siteSettings', to: '/site-settings', icon: 'mdi:cog', minRole: 'user_account', moduleId: 'portfolio' },
-  { labelKey: 'nav.hero', to: '/hero', icon: 'mdi:star-circle', minRole: 'user_account', moduleId: 'portfolio' },
-  { labelKey: 'nav.about', to: '/about', icon: 'mdi:account-details', minRole: 'user_account', moduleId: 'portfolio' },
-  { labelKey: 'nav.skills', to: '/skills', icon: 'mdi:code-braces', minRole: 'user_account', moduleId: 'portfolio' },
-  { labelKey: 'nav.projects', to: '/projects', icon: 'mdi:folder-multiple', minRole: 'user_account', moduleId: 'portfolio' },
-  { labelKey: 'nav.experience', to: '/experiences', icon: 'mdi:briefcase', minRole: 'user_account', moduleId: 'portfolio' },
-  { labelKey: 'nav.socialLinks', to: '/social-links', icon: 'mdi:link-variant', minRole: 'user_account', moduleId: 'portfolio' },
+  { labelKey: 'nav.siteSettings', to: '/site-settings', icon: 'mdi:cog', minRole: 'editor', moduleId: 'portfolio' },
+  { labelKey: 'nav.hero', to: '/hero', icon: 'mdi:star-circle', minRole: 'editor', moduleId: 'portfolio' },
+  { labelKey: 'nav.about', to: '/about', icon: 'mdi:account-details', minRole: 'editor', moduleId: 'portfolio' },
+  { labelKey: 'nav.skills', to: '/skills', icon: 'mdi:code-braces', minRole: 'editor', moduleId: 'portfolio' },
+  { labelKey: 'nav.projects', to: '/projects', icon: 'mdi:folder-multiple', minRole: 'editor', moduleId: 'portfolio' },
+  { labelKey: 'nav.experience', to: '/experiences', icon: 'mdi:briefcase', minRole: 'editor', moduleId: 'portfolio' },
+  { labelKey: 'nav.socialLinks', to: '/social-links', icon: 'mdi:link-variant', minRole: 'editor', moduleId: 'portfolio' },
   { labelKey: 'nav.messages', to: '/contacts', icon: 'mdi:email', moduleId: 'portfolio' },
   { labelKey: 'nav.users', to: '/users', icon: 'mdi:account-group', minRole: 'admin', moduleId: 'portfolio' },
+  { labelKey: 'nav.sites', to: '/sites', icon: 'mdi:web', minRole: 'super_admin', moduleId: 'portfolio' },
 ]

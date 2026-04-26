@@ -1,7 +1,7 @@
-import { canAccessAdminOnlyPath, canVisitorAccessPath } from '~/config/permissions'
+import { canAccessSuperAdminPath, canAccessUserManagementPath, canViewerAccessPath } from '~/config/permissions'
 
 export default defineNuxtRouteMiddleware((to) => {
-  const { isAuthenticated, isAdmin, isEditor } = useAuth()
+  const { isAuthenticated, canManageUsers, isEditor, isSuperAdmin } = useAuth()
 
   if (to.path === '/login') {
     if (isAuthenticated.value) {
@@ -14,11 +14,15 @@ export default defineNuxtRouteMiddleware((to) => {
     return navigateTo('/login')
   }
 
-  if (!canAccessAdminOnlyPath(to.path, isAdmin.value)) {
+  if (!canAccessUserManagementPath(to.path, canManageUsers.value)) {
     return navigateTo('/')
   }
 
-  if (!isEditor.value && !canVisitorAccessPath(to.path)) {
+  if (!canAccessSuperAdminPath(to.path, isSuperAdmin.value)) {
+    return navigateTo('/')
+  }
+
+  if (!isEditor.value && !canViewerAccessPath(to.path)) {
     return navigateTo('/')
   }
 })
