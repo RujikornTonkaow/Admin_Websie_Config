@@ -3,6 +3,8 @@ import type { ManagedSite } from '~/types/site'
 
 const sidebarOpen = ref(true)
 const api = useAdminApi()
+const route = useRoute()
+const { isSuperAdmin } = useAuth()
 const { selectedSiteId, setSelectedSiteId } = useSiteContext()
 
 const sites = ref<ManagedSite[]>([])
@@ -39,6 +41,10 @@ const handleSiteChange = (siteId: string, reloadCurrentRoute = false) => {
   }
 }
 
+const canRenderWithoutSites = computed(() =>
+  isSuperAdmin.value && route.path === '/sites',
+)
+
 onMounted(loadSites)
 </script>
 
@@ -65,7 +71,7 @@ onMounted(loadSites)
           {{ siteError }}
         </div>
 
-        <div v-else-if="sites.length === 0" class="mx-auto max-w-xl rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+        <div v-else-if="sites.length === 0 && !canRenderWithoutSites" class="mx-auto max-w-xl rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
           {{ $t('sites.noSites') }}
         </div>
 
