@@ -6,7 +6,7 @@
 
 ## Multi-site Cutover Notice
 
-Portfolio CRUD API เปลี่ยนเป็น site-scoped routes แบบใหม่ทั้งหมดแล้ว และไม่รองรับ legacy routes เดิม เช่น `/api/v1/admin/projects`, `/api/v1/admin/skills`, `/api/v1/admin/hero`, `/api/v1/admin/upload`
+Portfolio CRUD API เปลี่ยนเป็น site-scoped routes แบบใหม่ทั้งหมดแล้ว และไม่รองรับ legacy Portfolio admin routes เดิม
 
 รูปแบบใหม่:
 
@@ -25,7 +25,7 @@ Default: http://localhost:8080
 ตั้งค่าผ่าน: NUXT_PUBLIC_API_BASE_URL ใน .env
 ```
 
-ทุก endpoint มี prefix: `/api/v1/admin/`
+Admin endpoints ใช้ prefix `/api/v1/admin/` ส่วน Portfolio CRUD ใช้ path แบบ site-scoped: `/api/v1/admin/sites/{siteId}/portfolio/...`
 
 ---
 
@@ -123,7 +123,7 @@ Authorization: Bearer <jwt-token>
 
 ## Site Settings
 
-### GET `/api/v1/admin/site-settings`
+### GET `/api/v1/admin/sites/{siteId}/portfolio/site-settings`
 
 ดึงการตั้งค่าเว็บไซต์
 
@@ -146,7 +146,7 @@ Authorization: Bearer <jwt-token>
 
 **`default_theme` values:** `midnight`, `sunshine`
 
-### PUT `/api/v1/admin/site-settings`
+### PUT `/api/v1/admin/sites/{siteId}/portfolio/site-settings`
 
 อัพเดตการตั้งค่าเว็บไซต์
 
@@ -158,7 +158,7 @@ Authorization: Bearer <jwt-token>
 
 ## Hero Section
 
-### GET `/api/v1/admin/hero`
+### GET `/api/v1/admin/sites/{siteId}/portfolio/hero`
 
 ดึงข้อมูล hero section
 
@@ -180,7 +180,7 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-### PUT `/api/v1/admin/hero`
+### PUT `/api/v1/admin/sites/{siteId}/portfolio/hero`
 
 อัพเดต hero section
 
@@ -190,7 +190,7 @@ Authorization: Bearer <jwt-token>
 
 ## About Section
 
-### GET `/api/v1/admin/about`
+### GET `/api/v1/admin/sites/{siteId}/portfolio/about`
 
 ดึงข้อมูล about section
 
@@ -212,7 +212,7 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-### PUT `/api/v1/admin/about`
+### PUT `/api/v1/admin/sites/{siteId}/portfolio/about`
 
 อัพเดต about section
 
@@ -222,7 +222,7 @@ Authorization: Bearer <jwt-token>
 
 ## Skills
 
-### GET `/api/v1/admin/skills`
+### GET `/api/v1/admin/sites/{siteId}/portfolio/skills`
 
 ดึงรายการ skills ทั้งหมด
 
@@ -244,7 +244,7 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-### POST `/api/v1/admin/skills`
+### POST `/api/v1/admin/sites/{siteId}/portfolio/skills`
 
 สร้าง skill ใหม่
 
@@ -260,11 +260,11 @@ Authorization: Bearer <jwt-token>
 
 **Category values:** `frontend`, `backend`, `devops`, `tools`
 
-### PUT `/api/v1/admin/skills/:id`
+### PUT `/api/v1/admin/sites/{siteId}/portfolio/skills/:id`
 
 อัพเดต skill
 
-### DELETE `/api/v1/admin/skills/:id`
+### DELETE `/api/v1/admin/sites/{siteId}/portfolio/skills/:id`
 
 ลบ skill
 
@@ -274,7 +274,7 @@ Authorization: Bearer <jwt-token>
 
 ## Projects
 
-### GET `/api/v1/admin/projects`
+### GET `/api/v1/admin/sites/{siteId}/portfolio/projects`
 
 ดึงรายการ projects ทั้งหมด
 
@@ -299,19 +299,19 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-### POST `/api/v1/admin/projects`
+### POST `/api/v1/admin/sites/{siteId}/portfolio/projects`
 
 สร้าง project ใหม่
 
-### PUT `/api/v1/admin/projects/:id`
+### PUT `/api/v1/admin/sites/{siteId}/portfolio/projects/:id`
 
 อัพเดต project
 
-### DELETE `/api/v1/admin/projects/:id`
+### DELETE `/api/v1/admin/sites/{siteId}/portfolio/projects/:id`
 
 ลบ project
 
-### PUT `/api/v1/admin/projects/reorder`
+### PUT `/api/v1/admin/sites/{siteId}/portfolio/projects/reorder`
 
 เรียงลำดับ projects ใหม่
 
@@ -329,7 +329,7 @@ Authorization: Bearer <jwt-token>
 
 ## Experiences
 
-### GET `/api/v1/admin/experiences`
+### GET `/api/v1/admin/sites/{siteId}/portfolio/experiences`
 
 ดึงรายการ experiences ทั้งหมด
 
@@ -353,19 +353,19 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-### POST `/api/v1/admin/experiences`
+### POST `/api/v1/admin/sites/{siteId}/portfolio/experiences`
 
 สร้าง experience ใหม่
 
-### PUT `/api/v1/admin/experiences/:id`
+### PUT `/api/v1/admin/sites/{siteId}/portfolio/experiences/:id`
 
 อัพเดต experience
 
-### DELETE `/api/v1/admin/experiences/:id`
+### DELETE `/api/v1/admin/sites/{siteId}/portfolio/experiences/:id`
 
 ลบ experience
 
-### PUT `/api/v1/admin/experiences/reorder`
+### PUT `/api/v1/admin/sites/{siteId}/portfolio/experiences/reorder`
 
 เรียงลำดับ experiences ใหม่
 
@@ -383,7 +383,7 @@ Authorization: Bearer <jwt-token>
 
 ## Social Links
 
-### GET `/api/v1/admin/social-links`
+### GET `/api/v1/admin/sites/{siteId}/portfolio/social-links`
 
 ดึงรายการ social links ทั้งหมด
 
@@ -405,15 +405,15 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-### POST `/api/v1/admin/social-links`
+### POST `/api/v1/admin/sites/{siteId}/portfolio/social-links`
 
 สร้าง social link ใหม่
 
-### PUT `/api/v1/admin/social-links/:id`
+### PUT `/api/v1/admin/sites/{siteId}/portfolio/social-links/:id`
 
 อัพเดต social link
 
-### DELETE `/api/v1/admin/social-links/:id`
+### DELETE `/api/v1/admin/sites/{siteId}/portfolio/social-links/:id`
 
 ลบ social link
 
@@ -423,7 +423,7 @@ Authorization: Bearer <jwt-token>
 
 ## Contact Messages
 
-### GET `/api/v1/admin/contacts`
+### GET `/api/v1/admin/sites/{siteId}/portfolio/contacts`
 
 ดึงรายการข้อความทั้งหมด
 
@@ -434,7 +434,7 @@ Authorization: Bearer <jwt-token>
   "data": [
     {
       "id": "abc123",
-      "name": "John Visitor",
+      "name": "John Viewer",
       "email": "john@example.com",
       "subject": "Job Inquiry",
       "message": "I'd like to discuss...",
@@ -448,11 +448,11 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-### GET `/api/v1/admin/contacts/:id`
+### GET `/api/v1/admin/sites/{siteId}/portfolio/contacts/:id`
 
 ดึงรายละเอียดข้อความเดียว
 
-### DELETE `/api/v1/admin/contacts/:id`
+### DELETE `/api/v1/admin/sites/{siteId}/portfolio/contacts/:id`
 
 ลบข้อความ (editor ขึ้นไป)
 
@@ -460,11 +460,11 @@ Authorization: Bearer <jwt-token>
 
 ---
 
-## Users (Admin Only)
+## Users (`admin+`)
 
 ### GET `/api/v1/admin/users`
 
-ดึงรายการ users ทั้งหมด
+ดึงรายการ users ที่ผู้ใช้ปัจจุบันมีสิทธิ์เห็น
 
 **Response:**
 
@@ -492,7 +492,7 @@ Authorization: Bearer <jwt-token>
 {
   "username": "newuser",
   "password": "secure-password",
-  "role": "user_account"
+  "role": "editor"
 }
 ```
 
@@ -529,13 +529,60 @@ Authorization: Bearer <jwt-token>
 
 ลบ user (ห้ามลบตัวเอง)
 
+### GET `/api/v1/admin/users/:id/memberships`
+
+ดึง site access ของ user
+
+### PUT `/api/v1/admin/users/:id/memberships`
+
+อัพเดต site access ของ user โดยส่งเฉพาะ `site_id`
+
+```json
+{
+  "memberships": [
+    { "site_id": "site-object-id" }
+  ]
+}
+```
+
 **ใช้ในหน้า:** `pages/users.vue`
+
+---
+
+## Sites
+
+### GET `/api/v1/admin/sites`
+
+ดึง site ที่ user ปัจจุบันเข้าถึงได้; `super_admin` จะเห็นทุก site
+
+### POST `/api/v1/admin/sites`
+
+สร้าง site ใหม่ ใช้ได้เฉพาะ `super_admin`
+
+```json
+{
+  "name": "Portfolio B",
+  "slug": "portfolio-b",
+  "type": "portfolio",
+  "domains": ["portfolio-nu-gray-57.vercel.app"]
+}
+```
+
+### PUT `/api/v1/admin/sites/:siteId`
+
+แก้ site metadata เช่น `name`, `slug`, `domains`
+
+### DELETE `/api/v1/admin/sites/:siteId`
+
+ลบ site
+
+**ใช้ในหน้า:** `pages/sites.vue`
 
 ---
 
 ## File Upload
 
-### POST `/api/v1/admin/upload`
+### POST `/api/v1/admin/sites/{siteId}/portfolio/upload`
 
 อัพโหลดไฟล์รูปภาพ
 
@@ -567,34 +614,34 @@ Authorization: Bearer <jwt-token>
 | Method | Endpoint | หน้าที่ | สิทธิ์ |
 |--------|----------|--------|-------|
 | POST | `/api/v1/admin/auth/login` | Login | Public |
-| GET | `/api/v1/admin/site-settings` | ดึง site settings | Editor+ |
-| PUT | `/api/v1/admin/site-settings` | อัพเดต site settings | Editor+ |
-| GET | `/api/v1/admin/hero` | ดึง hero | Editor+ |
-| PUT | `/api/v1/admin/hero` | อัพเดต hero | Editor+ |
-| GET | `/api/v1/admin/about` | ดึง about | Editor+ |
-| PUT | `/api/v1/admin/about` | อัพเดต about | Editor+ |
-| GET | `/api/v1/admin/skills` | ดึง skills | Editor+ |
-| POST | `/api/v1/admin/skills` | สร้าง skill | Editor+ |
-| PUT | `/api/v1/admin/skills/:id` | อัพเดต skill | Editor+ |
-| DELETE | `/api/v1/admin/skills/:id` | ลบ skill | Editor+ |
-| GET | `/api/v1/admin/projects` | ดึง projects | Editor+ |
-| POST | `/api/v1/admin/projects` | สร้าง project | Editor+ |
-| PUT | `/api/v1/admin/projects/:id` | อัพเดต project | Editor+ |
-| DELETE | `/api/v1/admin/projects/:id` | ลบ project | Editor+ |
-| PUT | `/api/v1/admin/projects/reorder` | เรียงลำดับ projects | Editor+ |
-| GET | `/api/v1/admin/experiences` | ดึง experiences | Editor+ |
-| POST | `/api/v1/admin/experiences` | สร้าง experience | Editor+ |
-| PUT | `/api/v1/admin/experiences/:id` | อัพเดต experience | Editor+ |
-| DELETE | `/api/v1/admin/experiences/:id` | ลบ experience | Editor+ |
-| PUT | `/api/v1/admin/experiences/reorder` | เรียงลำดับ experiences | Editor+ |
-| GET | `/api/v1/admin/social-links` | ดึง social links | Editor+ |
-| POST | `/api/v1/admin/social-links` | สร้าง social link | Editor+ |
-| PUT | `/api/v1/admin/social-links/:id` | อัพเดต social link | Editor+ |
-| DELETE | `/api/v1/admin/social-links/:id` | ลบ social link | Editor+ |
-| GET | `/api/v1/admin/contacts` | ดึง contacts | All roles |
-| GET | `/api/v1/admin/contacts/:id` | ดึง contact เดียว | All roles |
-| DELETE | `/api/v1/admin/contacts/:id` | ลบ contact | Editor+ |
-| POST | `/api/v1/admin/upload` | อัพโหลดไฟล์ | Editor+ |
+| GET | `/api/v1/admin/sites/{siteId}/portfolio/site-settings` | ดึง site settings | Editor+ |
+| PUT | `/api/v1/admin/sites/{siteId}/portfolio/site-settings` | อัพเดต site settings | Editor+ |
+| GET | `/api/v1/admin/sites/{siteId}/portfolio/hero` | ดึง hero | Editor+ |
+| PUT | `/api/v1/admin/sites/{siteId}/portfolio/hero` | อัพเดต hero | Editor+ |
+| GET | `/api/v1/admin/sites/{siteId}/portfolio/about` | ดึง about | Editor+ |
+| PUT | `/api/v1/admin/sites/{siteId}/portfolio/about` | อัพเดต about | Editor+ |
+| GET | `/api/v1/admin/sites/{siteId}/portfolio/skills` | ดึง skills | Editor+ |
+| POST | `/api/v1/admin/sites/{siteId}/portfolio/skills` | สร้าง skill | Editor+ |
+| PUT | `/api/v1/admin/sites/{siteId}/portfolio/skills/:id` | อัพเดต skill | Editor+ |
+| DELETE | `/api/v1/admin/sites/{siteId}/portfolio/skills/:id` | ลบ skill | Editor+ |
+| GET | `/api/v1/admin/sites/{siteId}/portfolio/projects` | ดึง projects | Editor+ |
+| POST | `/api/v1/admin/sites/{siteId}/portfolio/projects` | สร้าง project | Editor+ |
+| PUT | `/api/v1/admin/sites/{siteId}/portfolio/projects/:id` | อัพเดต project | Editor+ |
+| DELETE | `/api/v1/admin/sites/{siteId}/portfolio/projects/:id` | ลบ project | Editor+ |
+| PUT | `/api/v1/admin/sites/{siteId}/portfolio/projects/reorder` | เรียงลำดับ projects | Editor+ |
+| GET | `/api/v1/admin/sites/{siteId}/portfolio/experiences` | ดึง experiences | Editor+ |
+| POST | `/api/v1/admin/sites/{siteId}/portfolio/experiences` | สร้าง experience | Editor+ |
+| PUT | `/api/v1/admin/sites/{siteId}/portfolio/experiences/:id` | อัพเดต experience | Editor+ |
+| DELETE | `/api/v1/admin/sites/{siteId}/portfolio/experiences/:id` | ลบ experience | Editor+ |
+| PUT | `/api/v1/admin/sites/{siteId}/portfolio/experiences/reorder` | เรียงลำดับ experiences | Editor+ |
+| GET | `/api/v1/admin/sites/{siteId}/portfolio/social-links` | ดึง social links | Editor+ |
+| POST | `/api/v1/admin/sites/{siteId}/portfolio/social-links` | สร้าง social link | Editor+ |
+| PUT | `/api/v1/admin/sites/{siteId}/portfolio/social-links/:id` | อัพเดต social link | Editor+ |
+| DELETE | `/api/v1/admin/sites/{siteId}/portfolio/social-links/:id` | ลบ social link | Editor+ |
+| GET | `/api/v1/admin/sites/{siteId}/portfolio/contacts` | ดึง contacts | All roles |
+| GET | `/api/v1/admin/sites/{siteId}/portfolio/contacts/:id` | ดึง contact เดียว | All roles |
+| DELETE | `/api/v1/admin/sites/{siteId}/portfolio/contacts/:id` | ลบ contact | Editor+ |
+| POST | `/api/v1/admin/sites/{siteId}/portfolio/upload` | อัพโหลดไฟล์ | Editor+ |
 | GET | `/api/v1/admin/users` | ดึง users | Admin |
 | POST | `/api/v1/admin/users` | สร้าง user | Admin |
 | GET | `/api/v1/admin/users/:id` | ดึง user เดียว | Admin |

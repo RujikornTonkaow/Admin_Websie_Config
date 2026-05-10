@@ -71,11 +71,13 @@
     └─────┬──────┘
       No  │  Yes
       │   │
-      ▼   ├── Role = admin → เข้าได้ทุกหน้า
+      ▼   ├── Role = super_admin → เข้าได้ทุกหน้า + /sites
   /login  │
-          ├── Role = user_account (editor) → เข้าได้ทุกหน้า ยกเว้น /users
+          ├── Role = admin → content + /users ตาม site access
           │
-          └── Role = visitor → เข้าได้เฉพาะ / และ /contacts
+          ├── Role = editor → content ตาม site access, ไม่เห็น /users
+          │
+          └── Role = viewer → เข้าได้เฉพาะ / และ /contacts
 ```
 
 ### 3. Data Flow (การอ่าน-เขียนข้อมูล)
@@ -128,10 +130,10 @@
 
 **ตัวอย่าง flow การแก้ไข Skill:**
 
-1. เปิดหน้า `/skills` → `GET /api/v1/admin/skills` → แสดงรายการ
+1. เปิดหน้า `/skills` → `GET /api/v1/admin/sites/{siteId}/portfolio/skills` → แสดงรายการ
 2. กดปุ่ม Edit → โหลดข้อมูลลง form
 3. แก้ไขข้อมูลใน form → กด Save
-4. `PUT /api/v1/admin/skills/:id` → ส่งข้อมูลไป Backend
+4. `PUT /api/v1/admin/sites/{siteId}/portfolio/skills/:id` → ส่งข้อมูลไป Backend
 5. สำเร็จ → แสดง Toast "success" → โหลดรายการใหม่
 6. ล้มเหลว → แสดง Toast "error" พร้อมข้อความ
 
@@ -156,7 +158,7 @@
               └───┬────────┬───┘
                   │ Yes    │ No
                   ▼        ▼
-          สร้าง blob URL  POST /api/v1/admin/upload
+          สร้าง blob URL  POST /api/v1/admin/sites/{siteId}/portfolio/upload
           (preview เท่านั้น) │ (multipart/form-data)
                             ▼
                     รับ path กลับมา
@@ -211,7 +213,7 @@ app.vue
                 ├── AdminHeader (ด้านบน)
                 │   ├── Menu toggle
                 │   ├── Page title (ดึงจาก route)
-                │   ├── Read-only badge (visitor)
+│   ├── Read-only badge (viewer)
                 │   ├── Demo Mode badge (mock)
                 │   └── LanguageSwitcher
                 │

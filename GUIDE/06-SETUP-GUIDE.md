@@ -250,7 +250,7 @@ onMounted(loadData)
 ### Admin Panel ไม่สามารถเชื่อมต่อ Backend
 
 ```
-✅ ตรวจว่า Backend รันอยู่: curl http://localhost:8080/api/v1/admin/site-settings
+✅ ตรวจว่า Backend รันอยู่: curl http://localhost:8080/api/v1/admin/sites
 ✅ ตรวจค่า NUXT_PUBLIC_API_BASE_URL ใน .env
 ✅ ตรวจว่า CORS เปิดอยู่ที่ Backend
 💡 ใช้ Demo Mode แทนเพื่อทดลองใช้งาน

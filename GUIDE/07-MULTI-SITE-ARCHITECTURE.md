@@ -25,7 +25,7 @@
 แนวทางปัจจุบันคือ **multi-site cutover**:
 
 - ไม่ย้าย route เดิม เช่น `/projects`, `/hero`, `/skills`
-- เปลี่ยน API เดิม เช่น `/api/v1/admin/projects` เป็น `/api/v1/admin/sites/:siteId/portfolio/projects`
+- Portfolio CRUD ใช้ `/api/v1/admin/sites/:siteId/portfolio/...`
 - ไม่รองรับ legacy portfolio API routes เดิมแล้ว
 - แยก frontend structure ให้พร้อมรองรับ domain ใหม่
 - backend ต้องมี `sites`, `site_members` และ `site_id` ก่อนใช้งานจริง
@@ -129,13 +129,7 @@ Portfolio ใช้ endpoint ใหม่ที่มี `siteId` เท่า�
 
 ### Site-scoped API สำหรับ Portfolio หลายเว็บ
 
-เมื่อ backend รองรับ multi-site แล้ว Portfolio API ต้องเปลี่ยนจาก endpoint กลาง:
-
-```text
-/api/v1/admin/projects
-```
-
-เป็น endpoint ที่มี `siteId`:
+เมื่อ backend รองรับ multi-site แล้ว Portfolio API ต้องใช้ endpoint ที่มี `siteId`:
 
 ```text
 /api/v1/admin/sites/:siteId/portfolio/projects
@@ -240,7 +234,6 @@ sites
 site_members
 - site_id
 - user_id
-- role: owner | editor | viewer
 - created_at
 - updated_at
 ```
@@ -294,7 +287,7 @@ DELETE /api/v1/admin/sites/:siteId/portfolio/projects/:id
 
 - อ่าน `user_id` จาก JWT context
 - ตรวจว่า `user_id` เป็น member ของ `siteId`
-- ตรวจ role ราย site เช่น `owner/editor/viewer`
+- ใช้ global role (`super_admin`, `admin`, `editor`, `viewer`) เป็นตัวตัดสินสิทธิ์อ่าน/เขียน
 - query/update ข้อมูลด้วย filter ที่มี `site_id` เสมอ
 - ห้ามรับ `site_id` จาก request body แล้วเชื่อทันที ให้ใช้ `siteId` จาก path ที่ผ่าน permission check แล้ว
 
@@ -306,19 +299,13 @@ GET /api/v1/public/sites/:siteId/portfolio
 POST /api/v1/public/sites/:siteId/portfolio/contacts
 ```
 
-หรือ backend จะรวมเป็น endpoint เดียวก็ได้:
-
-```text
-GET /api/v1/public/portfolio?host=:hostname
-```
-
-แต่ต้องมี domain mapping ใน backend เพื่อรู้ว่า `user-a.com` คือ site A และ `user-b.com` คือ site B
+เว็บ port ต้อง resolve site จาก domain ก่อน แล้วใช้ `siteId` ที่ได้ไปดึงข้อมูล portfolio ของ site นั้น
 
 ---
 
 ## สิ่งที่โปรเจกต์ Portfolio/port ต้องปรับ
 
-เว็บ port หน้าบ้านต้องเลิกโหลดข้อมูลแบบ global ถ้า backend เดิมมี endpoint เช่น `/api/v1/public/portfolio` ที่คืนข้อมูลชุดเดียว ต้องเปลี่ยนเป็นโหลดตาม domain/site
+เว็บ port หน้าบ้านต้องเลิกโหลดข้อมูลแบบ global และต้องโหลดตาม domain/site ผ่าน public multi-site endpoints
 
 Flow ที่แนะนำ:
 
@@ -359,13 +346,7 @@ Backend `Admin_Website_Management` ต้องใช้ multi-site เป็น
 
 ### 1. แยก API namespace ตาม domain
 
-จากเดิม:
-
-```text
-/api/v1/admin/projects
-```
-
-เป็น:
+Portfolio admin routes ต้องมี `siteId` เสมอ:
 
 ```text
 /api/v1/admin/sites/:siteId/portfolio/projects
@@ -373,7 +354,7 @@ Backend `Admin_Website_Management` ต้องใช้ multi-site เป็น
 /api/v1/admin/finance/expenses
 ```
 
-ไม่ต้อง preserve backward compatibility กับ legacy Portfolio routes เดิม ให้ลบ `/api/v1/admin/projects`, `/api/v1/admin/skills`, `/api/v1/admin/hero`, `/api/v1/admin/upload` และ route เดิมอื่นในกลุ่ม Portfolio ออกทั้งหมด
+ไม่ต้อง preserve backward compatibility กับ legacy Portfolio routes เดิม ให้ลบ route เดิมในกลุ่ม Portfolio ออกทั้งหมด
 
 ### 2. แยก handler/service/repository ตาม domain
 

@@ -68,7 +68,7 @@ Website_Config/
 │   ├── experiences.vue              # จัดการ Experiences
 │   ├── social-links.vue             # จัดการ Social Links
 │   ├── contacts.vue                 # จัดการ Contact Messages
-│   └── users.vue                    # จัดการผู้ใช้งาน (Admin only)
+│   └── users.vue                    # จัดการผู้ใช้งาน (admin+)
 │
 ├── types/
 │   ├── admin.ts                     # Re-export types เดิมเพื่อ backward compatibility
@@ -150,7 +150,7 @@ NUXT_PUBLIC_API_BASE_URL=http://localhost:8080
 - แสดง Logo และชื่อแอป
 - แสดง Navigation links ที่กรองตาม role ของผู้ใช้ (`minRole`)
 - Highlight link ที่ active ตาม route ปัจจุบัน
-- แสดง Role badge (Admin / Editor / Visitor)
+- แสดง Role badge (`super_admin` / `admin` / `editor` / `viewer`)
 - ปุ่ม Logout
 - รองรับ collapse/expand
 - ใช้ i18n สำหรับ label ทุกตัว
@@ -165,7 +165,7 @@ NUXT_PUBLIC_API_BASE_URL=http://localhost:8080
 
 - ปุ่ม toggle sidebar (hamburger menu)
 - แสดง page title ที่ดึงจาก route path + i18n
-- แสดง badge "Read-only" สำหรับ visitor (non-mock mode)
+- แสดง badge "Read-only" สำหรับ `viewer` (non-mock mode)
 - แสดง badge "Demo Mode" เมื่ออยู่ใน mock mode
 - มี `LanguageSwitcher` component
 
@@ -280,8 +280,8 @@ NUXT_PUBLIC_API_BASE_URL=http://localhost:8080
 
 **หน้าที่:** API เฉพาะ Portfolio domain
 
-- ครอบ API เดิมทั้งหมดของ Portfolio โดยใช้ `apiNamespace` จาก `config/modules.ts`
-- ยังใช้ endpoint เดิม เช่น `/api/v1/admin/projects`, `/api/v1/admin/hero`
+- ครอบ API Portfolio แบบ site-scoped ผ่าน `useSiteContext()`
+- ใช้ endpoint ใหม่ เช่น `/api/v1/admin/sites/{siteId}/portfolio/projects`
 - รองรับ Mock Mode ผ่าน `useMockData.ts`
 - แยก Portfolio ออกจาก `useAdminApi.ts` เพื่อเตรียมเพิ่ม domain ใหม่ เช่น shop/finance
 
@@ -296,8 +296,10 @@ NUXT_PUBLIC_API_BASE_URL=http://localhost:8080
 | `logout()` | ล้าง token และ redirect ไป /login |
 | `getAuthHeaders()` | คืน `{ Authorization: 'Bearer ...' }` สำหรับ API calls |
 | `isAuthenticated` | computed: มี token หรือไม่ |
-| `isAdmin` | computed: role เป็น admin หรือไม่ |
-| `isEditor` | computed: role เป็น editor (user_account) หรือ admin |
+| `isSuperAdmin` | computed: role เป็น `super_admin` หรือไม่ |
+| `isAdmin` | computed: role level `admin+` หรือไม่ |
+| `isEditor` | computed: role level `editor+` หรือไม่ |
+| `canManageUsers` | computed: role level `admin+` หรือไม่ |
 | `hasRole(role)` | ตรวจว่า role ปัจจุบัน >= role ที่กำหนด |
 | `isMockMode` | computed: อยู่ใน Demo Mode หรือไม่ |
 | `userRole` | computed: role ปัจจุบัน |
@@ -348,7 +350,7 @@ NUXT_PUBLIC_API_BASE_URL=http://localhost:8080
 - แสดงสถิติรวม: จำนวน Skills, Projects, Experiences, Messages
 - แสดง Quick Actions สำหรับ editor ขึ้นไป
 - แสดง Recent Messages (5 ข้อความล่าสุด)
-- Visitor เห็นเฉพาะ stats ข้อความ
+- `viewer` เห็นเฉพาะ stats ข้อความ
 
 ### `login.vue` — Login (`/login`)
 
@@ -403,14 +405,14 @@ NUXT_PUBLIC_API_BASE_URL=http://localhost:8080
 - แสดงรายการข้อความจากผู้เข้าชมเว็บ
 - เปิดอ่านรายละเอียดข้อความ (mark as read)
 - ลบข้อความ (เฉพาะ editor ขึ้นไป)
-- Visitor ดูได้อย่างเดียว
+- `viewer` ดูได้อย่างเดียว
 
 ### `users.vue` — User Management (`/users`)
 
-- **Admin only** — ผู้ใช้ role อื่นเข้าไม่ได้
+- `admin+` เท่านั้น — `editor` และ `viewer` เข้าไม่ได้
 - CRUD: สร้าง, แก้ไข, ลบ user
 - เปลี่ยน password ของ user
-- เปลี่ยน role (admin / user_account / visitor)
+- เปลี่ยน role (`admin` / `editor` / `viewer`) ส่วน `super_admin` สร้างได้เฉพาะ `super_admin`
 - ไม่สามารถลบตัวเอง
 
 ---
@@ -440,7 +442,7 @@ NUXT_PUBLIC_API_BASE_URL=http://localhost:8080
 - ตรวจสอบ authentication (มี token หรือไม่)
 - ตรวจสอบ authorization (role มีสิทธิ์เข้าหน้านั้นหรือไม่)
 - Redirect ไป `/login` ถ้ายังไม่ login
-- Redirect ไป `/` ถ้า visitor พยายามเข้าหน้าที่ไม่มีสิทธิ์
+- Redirect ไป `/` ถ้า role ไม่มีสิทธิ์เข้าหน้านั้น
 
 ---
 
@@ -450,7 +452,7 @@ NUXT_PUBLIC_API_BASE_URL=http://localhost:8080
 
 - นิยาม module/domain ที่ Admin Shell รู้จัก เช่น `portfolio`, `shop`, `finance`
 - ระบุ `basePath`, `apiNamespace`, icon, label key และสถานะ `enabled`
-- ตอนนี้ `portfolio` เปิดใช้งานจริง ส่วน `shop` และ `finance` เป็น placeholder สำหรับอนาคต
+- `portfolio`, `shop`, `finance` เปิดได้จาก config แต่ sidebar จะแสดง module ก็ต่อเมื่อ backend ส่ง site type นั้นกลับมา
 
 ### `config/navigation.ts`
 
@@ -460,9 +462,9 @@ NUXT_PUBLIC_API_BASE_URL=http://localhost:8080
 
 ### `config/permissions.ts`
 
-- รวม role hierarchy (`visitor`, `user_account`, `admin`)
-- รวม route access rules เช่น visitor allowed paths และ admin-only paths
-- มี helper functions เช่น `hasMinimumRole()`, `canAccessAdminOnlyPath()`, `canVisitorAccessPath()`
+- รวม role hierarchy (`viewer`, `editor`, `admin`, `super_admin`)
+- รวม route access rules เช่น viewer allowed paths, user management paths และ super-admin-only paths
+- มี helper functions เช่น `hasMinimumRole()`, `canAccessUserManagementPath()`, `canAccessSuperAdminPath()`, `canViewerAccessPath()`
 
 ---
 
@@ -476,7 +478,7 @@ NUXT_PUBLIC_API_BASE_URL=http://localhost:8080
 
 ### `types/auth.ts`
 
-- `UserRole`: `admin | user_account | visitor`
+- `UserRole`: `super_admin | admin | editor | viewer`
 - User management types: `AdminUser`, `CreateUserRequest`, `UpdateUserRequest`, `ChangePasswordRequest`
 - Login types: `LoginRequest`, `LoginResponse`, `LoginUser`
 

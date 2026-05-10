@@ -98,7 +98,7 @@ SiteSettings, Hero, About, Skill, Project,
 Experience, SocialLink, ContactMessage, User
 
 // Utility types
-UserRole = 'admin' | 'user_account' | 'visitor'
+UserRole = 'super_admin' | 'admin' | 'editor' | 'viewer'
 ApiEnvelope<T> = { data: T; error?: string; meta?: object }
 SidebarLink = { label: string; to: string; icon: string; minRole?: UserRole }
 ```

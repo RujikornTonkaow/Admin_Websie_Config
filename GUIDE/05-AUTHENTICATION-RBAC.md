@@ -1,304 +1,111 @@
-# 05 — Authentication & RBAC (ระบบยืนยันตัวตนและสิทธิ์)
+# 05 — Authentication & RBAC
 
-เอกสารนี้อธิบายระบบ Authentication และ Role-Based Access Control (RBAC) ของ Admin Panel อย่างละเอียด
-
----
-
-## ภาพรวม
-
-Admin Panel ใช้ **JWT (JSON Web Token)** สำหรับ Authentication และแบ่งสิทธิ์ผู้ใช้เป็น 3 ระดับ (Role) โดยทั้ง Frontend และ Backend ทำงานร่วมกันในการควบคุมสิทธิ์
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                     Role Hierarchy                       │
-│                                                         │
-│   admin ──────────► เข้าได้ทุกหน้า + จัดการ users          │
-│     │                                                   │
-│   user_account ──► เข้าได้ทุกหน้า ยกเว้น /users (editor)   │
-│     │                                                   │
-│   visitor ───────► เข้าได้เฉพาะ / และ /contacts (อ่านเท่านั้น)│
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
+เอกสารนี้อธิบายระบบ login และสิทธิ์ปัจจุบันของ Admin Dashboard หลังเปลี่ยนเป็น multi-site แล้ว
 
 ---
 
-## Roles (บทบาทผู้ใช้)
+## Role Model ปัจจุบัน
 
-### 1. `admin` — ผู้ดูแลระบบ
+ระบบใช้ role ระดับบัญชี 4 ระดับ:
 
-| สิทธิ์ | รายละเอียด |
-|--------|-----------|
-| เข้าถึง | ทุกหน้าในระบบ |
-| จัดการเนื้อหา | CRUD skills, projects, experiences, etc. |
-| จัดการ users | สร้าง, แก้ไข, ลบ, เปลี่ยน password, เปลี่ยน role |
-| ลบข้อความ | ลบ contact messages ได้ |
-| ดู Dashboard | เห็นสถิติทั้งหมด + quick actions |
+| Role | สิทธิ์หลัก |
+|------|------------|
+| `super_admin` | เห็นทุก site, จัดการ site, จัดการ user ทุกคน, สร้าง `super_admin` คนอื่นได้ |
+| `admin` | เห็นเฉพาะ site ที่ได้รับสิทธิ์, แก้ content, จัดการ user ภายใต้ site ที่ตัวเองมี access, แต่สร้าง `super_admin` ไม่ได้ |
+| `editor` | เห็นเฉพาะ site ที่ได้รับสิทธิ์ และแก้ content ได้ แต่ไม่เห็น User Management |
+| `viewer` | เห็นเฉพาะ site ที่ได้รับสิทธิ์ และเข้าได้เฉพาะ Dashboard/Contacts |
 
-### 2. `user_account` (Editor) — ผู้แก้ไขเนื้อหา
-
-| สิทธิ์ | รายละเอียด |
-|--------|-----------|
-| เข้าถึง | ทุกหน้า **ยกเว้น** `/users` |
-| จัดการเนื้อหา | CRUD skills, projects, experiences, etc. |
-| จัดการ users | **ไม่ได้** |
-| ลบข้อความ | ลบ contact messages ได้ |
-| ดู Dashboard | เห็นสถิติทั้งหมด + quick actions |
-
-### 3. `visitor` — ผู้เยี่ยมชม
-
-| สิทธิ์ | รายละเอียด |
-|--------|-----------|
-| เข้าถึง | เฉพาะ `/` (Dashboard) และ `/contacts` |
-| จัดการเนื้อหา | **ไม่ได้** (read-only) |
-| จัดการ users | **ไม่ได้** |
-| ลบข้อความ | **ไม่ได้** |
-| ดู Dashboard | เห็นเฉพาะสถิติ messages |
+`site_members` เป็น access list ว่า user เข้าถึง site ไหนได้บ้าง ไม่ใช้ per-site role ใน UI แล้ว
 
 ---
 
 ## Authentication Flow
 
-### Login ปกติ
+1. ผู้ใช้ login ที่ `/login`
+2. `useAuth().login()` เรียก `POST /api/v1/admin/auth/login`
+3. Backend ตรวจ username/password แล้วส่ง JWT กลับมา
+4. Frontend เก็บ token ใน `useState('auth_token')` และ `localStorage('admin_token')`
+5. Frontend decode JWT เพื่ออ่าน `role` และ `sub`
+6. Logout จะล้าง token, role, selected site และ redirect ไป `/login`
 
-```
-1. ผู้ใช้กรอก username + password ที่หน้า /login
-                │
-                ▼
-2. useAuth().login() ส่ง POST /api/v1/admin/auth/login
-                │
-                ▼
-3. Backend ตรวจสอบ credentials
-   ├── ถูกต้อง → ส่ง JWT token กลับมา
-   │             │
-   │             ▼
-   │   4. เก็บ token ลง:
-   │      - useState('auth_token') — reactive state
-   │      - localStorage('admin_token') — persist ข้าม reload
-   │             │
-   │             ▼
-   │   5. Decode JWT เพื่อดึง role และ user ID
-   │      - useState('user_role')
-   │      - useState('current_user_id')
-   │             │
-   │             ▼
-   │   6. navigateTo('/') → เข้า Dashboard
-   │
-   └── ผิดพลาด → แสดง error message ที่หน้า login
-```
-
-### Demo Mode (Mock Login)
-
-```
-1. ผู้ใช้กด "Demo Mode" ที่หน้า /login
-                │
-                ▼
-2. useAuth().loginDemo()
-   - สร้าง fake JWT token
-   - ตั้ง role = 'admin'
-   - ตั้ง mock_mode = true
-   - เก็บลง localStorage
-                │
-                ▼
-3. ทุก API call จะ short-circuit ไปใช้ useMockData()
-   (ไม่ยิง HTTP request จริง)
-                │
-                ▼
-4. navigateTo('/') → เข้า Dashboard (Demo)
-```
-
-### Logout
-
-```
-1. ผู้ใช้กดปุ่ม Logout ที่ sidebar
-                │
-                ▼
-2. useAuth().logout()
-   - ล้าง auth_token (useState + localStorage)
-   - ล้าง mock_mode
-   - ล้าง user_role
-   - ล้าง current_user_id
-                │
-                ▼
-3. navigateTo('/login')
-```
-
-### Token Recovery (เปิดหน้าใหม่ / refresh)
-
-```
-1. Page load → useAuth() ทำงาน
-                │
-                ▼
-2. อ่าน token จาก localStorage('admin_token')
-                │
-        ┌───────┴───────┐
-        │ มี token      │ ไม่มี token
-        ▼               ▼
-   Decode JWT      auth.global.ts
-   ตั้ง role/id    redirect → /login
-   ใช้งานต่อได้
-```
-
----
-
-## JWT Token Structure
-
-### Payload ที่ Backend สร้าง
+JWT payload ที่ frontend ใช้:
 
 ```json
 {
-  "sub": "64a1b2c3d4e5f6789012abcd",
-  "role": "admin",
+  "sub": "user_object_id",
+  "usr": "admin",
+  "role": "super_admin",
   "iat": 1700000000,
   "exp": 1700086400
 }
 ```
 
-| Claim | คำอธิบาย |
-|-------|---------|
-| `sub` | User ID (MongoDB ObjectID) |
-| `role` | บทบาทของผู้ใช้: `admin`, `user_account`, `visitor` |
-| `iat` | เวลาที่สร้าง token |
-| `exp` | เวลาที่ token หมดอายุ |
-
-### การ Decode ใน Frontend
-
-`useAuth.ts` decode JWT payload ด้วย `atob()` + `JSON.parse()` (ไม่ verify signature ฝั่ง client เพราะ signature verification ทำที่ Backend)
+Frontend decode JWT เพื่อทำ UX guard เท่านั้น ส่วน backend ต้อง verify JWT และ enforce permission จริงทุกครั้ง
 
 ---
 
-## Route Guard (Middleware)
+## Route Guard
 
-### `middleware/auth.global.ts`
+ไฟล์หลัก:
 
-Middleware นี้ทำงาน**ทุกครั้ง**ที่มีการ navigate ไปหน้าใดๆ
+- `middleware/auth.global.ts`
+- `config/permissions.ts`
 
-```
-┌─────────────────────────────────────────────────────────┐
-│               auth.global.ts Decision Tree               │
-│                                                         │
-│  Route = /login?                                        │
-│  ├── Yes + authenticated → redirect /                   │
-│  └── Yes + not authenticated → ✅ ผ่าน (แสดง login)      │
-│                                                         │
-│  Authenticated?                                         │
-│  └── No → redirect /login                               │
-│                                                         │
-│  Route = /users?                                        │
-│  └── Yes + role ≠ admin → redirect /                    │
-│                                                         │
-│  Role = visitor?                                        │
-│  └── Yes + route ไม่ใช่ / หรือ /contacts → redirect /    │
-│                                                         │
-│  ✅ ผ่านทั้งหมด → แสดงหน้าตามปกติ                          │
-└─────────────────────────────────────────────────────────┘
-```
+กติกาปัจจุบัน:
 
-### Visitor Allowed Paths
+| Path | ผู้เข้าได้ |
+|------|------------|
+| `/login` | unauthenticated เท่านั้น ถ้า login แล้วจะ redirect `/` |
+| `/` | ทุก role ที่ login แล้ว |
+| `/contacts` | ทุก role ที่ login แล้ว |
+| content pages เช่น `/site-settings`, `/hero`, `/projects` | `editor+` |
+| `/users` | `admin+` |
+| `/sites` | `super_admin` เท่านั้น |
 
-```typescript
-const VISITOR_ALLOWED_PATHS = ['/', '/contacts', '/login']
-```
-
-### Admin Only Paths
-
-```typescript
-const ADMIN_ONLY_PATHS = ['/users']
-```
+ถ้ายังไม่มี site เลย layout จะบล็อกหน้าส่วนใหญ่ไว้ แต่ `super_admin` ยังเข้า `/sites` ได้เพื่อสร้าง site แรก
 
 ---
 
-## Sidebar Navigation (UI-level RBAC)
+## Sidebar
 
-Sidebar ใช้ `minRole` เพื่อกรอง link ที่แสดง:
+Sidebar ใช้ `config/navigation.ts` และ `hasRole(minRole)` เพื่อซ่อน/แสดงเมนู
 
-| Link | Path | `minRole` | ใครเห็น |
-|------|------|-----------|--------|
-| Dashboard | `/` | `visitor` | ทุกคน |
-| Site Settings | `/site-settings` | `user_account` | Editor, Admin |
-| Hero | `/hero` | `user_account` | Editor, Admin |
-| About | `/about` | `user_account` | Editor, Admin |
-| Skills | `/skills` | `user_account` | Editor, Admin |
-| Projects | `/projects` | `user_account` | Editor, Admin |
-| Experiences | `/experiences` | `user_account` | Editor, Admin |
-| Social Links | `/social-links` | `user_account` | Editor, Admin |
-| Contacts | `/contacts` | `visitor` | ทุกคน |
-| Users | `/users` | `admin` | Admin เท่านั้น |
-
-### `hasRole()` Logic
-
-```
-Role Levels:
-  visitor      = 0
-  user_account = 1
-  admin        = 2
-
-hasRole(requiredRole):
-  return currentRoleLevel >= requiredRoleLevel
-```
+- Portfolio menu แสดงตาม site type `portfolio` ที่ backend ส่งกลับมา
+- Shop/Finance menu จะแสดงก็ต่อเมื่อ backend ส่ง site type `shop` หรือ `finance` กลับมาแล้ว
+- `User Management` แสดงเฉพาะ `admin+`
+- `Site Management` แสดงเฉพาะ `super_admin`
 
 ---
 
-## UI Indicators
+## User Management
 
-### Read-Only Badge
+หน้า `/users` ใช้สำหรับ `admin+`
 
-- แสดงที่ `AdminHeader` เมื่อ role = `visitor` **และ** ไม่ใช่ mock mode
-- บ่งบอกว่าผู้ใช้ดูได้อย่างเดียว ไม่สามารถแก้ไข
-
-### Demo Mode Badge
-
-- แสดงที่ `AdminHeader` เมื่อ `isMockMode = true`
-- บ่งบอกว่ากำลังใช้ข้อมูล mock ไม่ใช่ข้อมูลจริง
-
-### Role Badge
-
-- แสดงที่ `AdminSidebar` ด้านล่าง
-- แสดง role ปัจจุบัน (Admin / Editor / Visitor)
+- `super_admin` เห็นและจัดการ user ทุกคน
+- `admin` จัดการ user ได้ภายใต้ site ที่ตัวเองมี access
+- `admin` สร้าง `admin`, `editor`, `viewer` ได้ แต่สร้าง `super_admin` ไม่ได้
+- `editor` และ `viewer` ไม่เห็นเมนู User Management
+- ตอนสร้าง/แก้ user เลือก site access ด้วย checkbox
 
 ---
 
-## Component-Level Access Control
+## Site Management
 
-บาง component ซ่อน/แสดงปุ่มตาม role:
+หน้า `/sites` ใช้สำหรับ `super_admin` เท่านั้น
 
-| Component/Page | Action | ต้องการ role |
-|---------------|--------|-------------|
-| `contacts.vue` | ปุ่มลบข้อความ | `isEditor` (user_account+) |
-| `users.vue` | ปุ่มลบ user | `isAdmin` + ไม่ใช่ตัวเอง |
-| `users.vue` | เปลี่ยน role ตัวเอง | ไม่ได้ (disabled) |
-| `index.vue` | Quick Actions | `isEditor` |
-| `index.vue` | สถิติ Skills/Projects/Exp | `isEditor` |
+ทำได้:
 
----
+- สร้าง site ใหม่
+- แก้ `name`, `slug`, `domains`
+- ลบ site
 
-## Backend RBAC (สิ่งที่ Backend ทำเพิ่ม)
-
-Backend (Go) ตรวจสอบสิทธิ์เพิ่มเติมที่ API level:
-
-1. **Verify JWT signature** — ทุก request (ยกเว้น login)
-2. **Check token expiry** — token หมดอายุ → 401
-3. **Check role permissions** — role ไม่มีสิทธิ์ → 403
-4. **Validate ownership** — บาง operation ตรวจว่าเป็นเจ้าของ resource
-
-> Frontend RBAC เป็นแค่ UX guard ที่ทำให้ผู้ใช้ไม่เห็นสิ่งที่ไม่ควรเข้าถึง  
-> Backend RBAC เป็น security guard ที่ป้องกัน unauthorized access จริงๆ
+เมื่อสร้าง site type `portfolio` backend จะ seed default portfolio content ให้ site นั้น เพื่อให้แก้ content ต่อได้ทันที
 
 ---
 
-## Security Considerations
+## Security Notes
 
-| ข้อควรระวัง | สถานะ |
-|------------|-------|
-| JWT เก็บใน `localStorage` | ⚠️ เสี่ยง XSS (ถ้ามี XSS vulnerability) |
-| Token ไม่ verify signature ฝั่ง client | ✅ ปกติ (Backend verify) |
-| Demo token เป็น fake | ✅ ปลอดภัย (mock mode ไม่ยิง API) |
-| 401 → auto logout | ✅ ดี (ป้องกันใช้ expired token) |
-| Route guard เป็น client-side | ⚠️ ต้องพึ่ง Backend RBAC ด้วย |
-
-### คำแนะนำสำหรับ Production
-
-1. พิจารณาใช้ **httpOnly cookie** แทน localStorage สำหรับเก็บ JWT
-2. ตั้ง **token expiry** ให้สั้น (เช่น 1-2 ชั่วโมง) พร้อม refresh token mechanism
-3. ใช้ **HTTPS** เสมอใน production
-4. ตรวจสอบว่า Backend มี **rate limiting** ที่ login endpoint
+- Frontend RBAC เป็น UX guard เท่านั้น
+- Backend ต้อง enforce role และ site access จริงทุก endpoint
+- JWT อยู่ใน `localStorage` จึงต้องระวัง XSS
+- Production ควรใช้ HTTPS เสมอ
